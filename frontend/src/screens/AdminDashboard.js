@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { getAllAppointments, updateAppointmentStatus, getAdminAnalytics, getBarbersList, assignBarber } from '../services/api';
+import { getAllAppointments, updateAppointmentStatus, getAdminAnalytics, getBarbersList, assignBarber, deleteAppointment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus } from 'lucide-react-native';
+import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus, Trash2 } from 'lucide-react-native';
 
 export default function AdminDashboard({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -49,16 +49,17 @@ export default function AdminDashboard({ navigation }) {
             const { data } = await getAdminAnalytics();
             setStats(data);
         } catch (error) {
-            console.error(error);
-            // Fallback mock stats
+            console.error('Failed to fetch Admin Data:', error);
             setStats({
-                totalAppointments: 150,
-                completed: 124,
-                pending: 12,
-                totalRevenue: 4500,
-                monthlyRevenue: 1250,
-                averageTicketSize: 35
+                totalAppointments: 0,
+                totalRevenue: 0,
+                completedAppointments: 0,
+                pendingAppointments: 0,
+                thisMonthRevenue: 0
             });
+            setAppointments([]);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -69,10 +70,7 @@ export default function AdminDashboard({ navigation }) {
         } catch (error) {
             console.error(error);
             // Fallback for mock mode
-            setAppointments([
-                { id: '1', userName: 'John Doe', service: 'Regular Haircut', date: '2026-03-06', time: '10:00 AM', status: 'pending' },
-                { id: '2', userName: 'Jane Smith', service: 'Wedding Package', date: '2026-03-07', time: '12:00 PM', status: 'completed' },
-            ]);
+            setAppointments([]);
         } finally {
             setLoading(false);
         }
@@ -86,6 +84,22 @@ export default function AdminDashboard({ navigation }) {
         } catch (error) {
             Alert.alert('Error', 'Failed to update status');
         }
+    };
+
+    const handleDeleteAppointment = (id) => {
+        Alert.alert('Delete Appointment', 'Permanently delete this appointment?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Delete', style: 'destructive', onPress: async () => {
+                    try {
+                        await deleteAppointment(id);
+                        setAppointments(prev => prev.filter(a => a.id !== id));
+                    } catch (error) {
+                        Alert.alert('Error', 'Failed to delete appointment');
+                    }
+                }
+            }
+        ]);
     };
 
     const renderItem = ({ item }) => (
@@ -214,21 +228,24 @@ export default function AdminDashboard({ navigation }) {
                     <View style={styles.mgmtGrid}>
                         <TouchableOpacity
                             style={styles.mgmtCard}
-                            onPress={() => navigation.navigate('Manage DB')}
+                            onPress={() => navigation.navigate('Services')}
                         >
                             <View style={[styles.iconBox, { backgroundColor: COLORS.primary + '15' }]}>
                                 <Package color={COLORS.primary} size={28} />
                             </View>
                             <Text style={styles.mgmtCardTitle}>Services</Text>
-                            <Text style={styles.mgmtCardSub}>Edit Styles</Text>
+                            <Text style={styles.mgmtCardSub}>CRUD Packages</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.mgmtCard}>
+                        <TouchableOpacity
+                            style={styles.mgmtCard}
+                            onPress={() => navigation.navigate('Users')}
+                        >
                             <View style={[styles.iconBox, { backgroundColor: '#4CAF5015' }]}>
-                                <Settings color="#4CAF50" size={28} />
+                                <Users color="#4CAF50" size={28} />
                             </View>
-                            <Text style={styles.mgmtCardTitle}>Barbers</Text>
-                            <Text style={styles.mgmtCardSub}>Staff List</Text>
+                            <Text style={styles.mgmtCardTitle}>Users</Text>
+                            <Text style={styles.mgmtCardSub}>Manage Roles</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -264,8 +281,9 @@ export default function AdminDashboard({ navigation }) {
                                 </View>
                             </View>
 
-                            {item.status === 'pending' && (
-                                <View style={styles.actions}>
+                            {/* Actions for ALL statuses */}
+                            <View style={styles.actions}>
+                                {item.status === 'pending' && (
                                     <TouchableOpacity
                                         style={[styles.actionBtn, styles.approveBtn]}
                                         onPress={() => {
@@ -276,7 +294,8 @@ export default function AdminDashboard({ navigation }) {
                                         <UserPlus color="#fff" size={18} />
                                         <Text style={styles.actionBtnText}>Assign</Text>
                                     </TouchableOpacity>
-
+                                )}
+                                {item.status === 'pending' && (
                                     <TouchableOpacity
                                         style={[styles.actionBtn, styles.cancelBtn]}
                                         onPress={() => handleStatusUpdate(item.id, 'cancelled')}
@@ -284,8 +303,15 @@ export default function AdminDashboard({ navigation }) {
                                         <XCircle color="#fff" size={18} />
                                         <Text style={styles.actionBtnText}>Cancel</Text>
                                     </TouchableOpacity>
-                                </View>
-                            )}
+                                )}
+                                <TouchableOpacity
+                                    style={[styles.actionBtn, { backgroundColor: '#F44336', borderColor: '#F44336' }]}
+                                    onPress={() => handleDeleteAppointment(item.id)}
+                                >
+                                    <Trash2 color="#fff" size={18} />
+                                    <Text style={styles.actionBtnText}>Delete</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     ))}
                     {appointments.length === 0 && !loading && (

@@ -8,15 +8,14 @@ const api = axios.create({
     baseURL: API_BASE_URL,
 });
 
+import { auth } from '../config/firebase';
+
 // Add a request interceptor to attach the token
 api.interceptors.request.use(
     async (config) => {
         try {
-            const userStr = await AsyncStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                // In mock mode, we use a fake token. In real mode, use user.token
-                const token = user.token || 'MOCK_TOKEN_' + (user.role || 'user').toUpperCase();
+            if (auth.currentUser) {
+                const token = await auth.currentUser.getIdToken();
                 config.headers.Authorization = `Bearer ${token}`;
             }
         } catch (error) {
@@ -37,6 +36,9 @@ export const getStyles = () => api.get('/packages/styles');
 export const createPackage = (data) => api.post('/packages', data);
 export const updatePackage = (id, data) => api.put(`/packages/${id}`, data);
 export const deletePackage = (id) => api.delete(`/packages/${id}`);
+export const uploadImage = (formData) => api.post('/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+});
 
 // Appointments
 export const createAppointment = (data) => api.post('/appointments', data);
@@ -46,7 +48,14 @@ export const getAllAppointments = () => api.get('/appointments/admin/all');
 export const getAdminAnalytics = () => api.get('/appointments/admin/analytics');
 export const updateAppointmentStatus = (id, status) => api.patch(`/appointments/admin/${id}/status`, { status });
 export const assignBarber = (id, barberId) => api.put(`/appointments/admin/${id}/assign`, { barberId });
+export const deleteAppointment = (id) => api.delete(`/appointments/admin/${id}`);
 export const getBarbersList = () => api.get('/auth/barbers');
+
+// Admin User Management
+export const getAllUsers = () => api.get('/auth/users');
+export const updateUserRole = (id, role) => api.patch(`/auth/users/${id}/role`, { role });
+export const deleteUserById = (id) => api.delete(`/auth/users/${id}`);
+export const getUserProfile = (uid) => api.get(`/auth/profile/${uid}`);
 
 // Payments
 export const initializePayment = (data) => api.post('/payments/initialize', data);

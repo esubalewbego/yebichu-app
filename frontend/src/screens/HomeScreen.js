@@ -24,17 +24,9 @@ export default function HomeScreen({ navigation }) {
             setPackages(pkgs.data);
             setHairStyles(sts.data);
         } catch (error) {
-            console.error(error);
-            // Fallback for mock mode
-            setPackages([
-                { id: '1', name: 'Elite Grooming', price: 55, description: 'Complete grooming for your big day', duration: '90 min', image: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600' },
-                { id: '2', name: 'The Executive', price: 40, description: 'Look sharp for your ceremony', duration: '60 min', image: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&q=80&w=600' }
-            ]);
-            setHairStyles([
-                { id: 's1', name: 'Fade Classic', price: 25, image: 'https://images.unsplash.com/photo-1621605815841-28565f57fc97?auto=format&fit=crop&q=80&w=200' },
-                { id: 's2', name: 'Modern Pompadour', price: 30, image: 'https://images.unsplash.com/photo-1599351473299-d8395ed69c1c?auto=format&fit=crop&q=80&w=200' },
-                { id: 's3', name: 'Buzz Cut', price: 20, image: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?auto=format&fit=crop&q=80&w=200' }
-            ]);
+            console.error('Failed to fetch Home Data:', error);
+            setPackages([]);
+            setHairStyles([]);
         } finally {
             setLoading(false);
         }

@@ -22,12 +22,8 @@ export default function HistoryScreen() {
             const { data } = await getUserAppointments(user?.uid || user?.id);
             setAppointments(data);
         } catch (error) {
-            console.error(error);
-            // Fallback for mock mode
-            setAppointments([
-                { id: '1', name: 'Wedding Package', date: '2026-03-01', time: '10:00 AM', status: 'completed' },
-                { id: '2', name: 'Regular Haircut', date: '2026-03-10', time: '02:00 PM', status: 'pending' },
-            ]);
+            console.error('Failed to fetch History Data:', error);
+            setAppointments([]);
         } finally {
             setLoading(false);
         }

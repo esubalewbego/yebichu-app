@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { getPackages, createPackage, updatePackage, deletePackage } from '../services/api';
-import { Plus, Edit3, Trash2, X, Check, Package, Clock, DollarSign, AlignLeft, ChevronLeft } from 'lucide-react-native';
+import { getPackages, createPackage, updatePackage, deletePackage, uploadImage } from '../services/api';
+import { Plus, Edit3, Trash2, X, Check, Package, Clock, DollarSign, AlignLeft, ChevronLeft, Image as ImageIcon } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ManagePackagesScreen() {
     const { user } = useAuth();
@@ -21,7 +22,8 @@ export default function ManagePackagesScreen() {
     }
     const [modalVisible, setModalVisible] = useState(false);
     const [editingPackage, setEditingPackage] = useState(null);
-    const [formData, setFormData] = useState({ name: '', price: '', description: '', duration: '' });
+    const [formData, setFormData] = useState({ name: '', price: '', description: '', duration: '', image: '' });
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         fetchPackages();
@@ -55,7 +57,40 @@ export default function ManagePackagesScreen() {
             setModalVisible(false);
             fetchPackages();
         } catch (error) {
-            Alert.alert('Error', 'Failed to save package');
+            console.error('Save error:', error);
+            Alert.alert('Error', 'Failed to save package: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [16, 9],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            uploadImageToBackend(result.assets[0]);
+        }
+    };
+
+    const uploadImageToBackend = async (asset) => {
+        setUploadingImage(true);
+        try {
+            const formDataToUpload = new FormData();
+            formDataToUpload.append('image', {
+                uri: asset.uri,
+                type: 'image/jpeg',
+                name: 'upload.jpg',
+            });
+            const { data } = await uploadImage(formDataToUpload);
+            setFormData(prev => ({ ...prev, image: data.url }));
+        } catch (error) {
+            console.error('Image upload failed:', error);
+            Alert.alert('Upload Error', 'Failed to upload the image.');
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -78,10 +113,10 @@ export default function ManagePackagesScreen() {
     const openModal = (pkg = null) => {
         if (pkg) {
             setEditingPackage(pkg);
-            setFormData({ name: pkg.name, price: pkg.price.toString(), description: pkg.description, duration: pkg.duration });
+            setFormData({ name: pkg.name, price: pkg.price.toString(), description: pkg.description, duration: pkg.duration, image: pkg.image || '' });
         } else {
             setEditingPackage(null);
-            setFormData({ name: '', price: '', description: '', duration: '' });
+            setFormData({ name: '', price: '', description: '', duration: '', image: '' });
         }
         setModalVisible(true);
     };
@@ -169,6 +204,22 @@ export default function ManagePackagesScreen() {
                         </View>
 
                         <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.inputLabel}>Package Image</Text>
+                                <TouchableOpacity style={styles.imageUploadBox} onPress={pickImage} disabled={uploadingImage}>
+                                    {uploadingImage ? (
+                                        <ActivityIndicator size="small" color={COLORS.primary} />
+                                    ) : formData.image ? (
+                                        <Image source={{ uri: formData.image }} style={styles.uploadedImage} />
+                                    ) : (
+                                        <View style={styles.imagePlaceholder}>
+                                            <ImageIcon color={COLORS.textSecondary} size={28} />
+                                            <Text style={styles.imagePlaceholderText}>Tap to select an image</Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>Name</Text>
                                 <View style={styles.inputWrapper}>
@@ -428,6 +479,31 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         color: COLORS.text,
         fontSize: 16,
+    },
+    imageUploadBox: {
+        width: '100%',
+        height: 150,
+        backgroundColor: COLORS.background,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#444',
+        borderStyle: 'dashed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    uploadedImage: {
+        width: '100%',
+        height: '100%',
+    },
+    imagePlaceholder: {
+        alignItems: 'center',
+        opacity: 0.6,
+    },
+    imagePlaceholderText: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        marginTop: 8,
     },
     modalFooter: {
         marginTop: 10,

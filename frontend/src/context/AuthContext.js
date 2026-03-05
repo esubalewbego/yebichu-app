@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { signup as apiSignup, getProfile } from '../services/api';
+import { signup as apiSignup, getUserProfile } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from '../config/firebase';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = createContext({});
 
@@ -9,37 +11,37 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check for stored user session on mount
-        const loadUser = async () => {
+        // Listen for Firebase Auth state changes
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             try {
-                const storedUser = await AsyncStorage.getItem('user');
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
+                if (firebaseUser) {
+                    // Fetch additional role data from our backend
+                    const { data } = await getUserProfile(firebaseUser.uid);
+                    setUser({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        role: data.role || 'user',
+                        ...data
+                    });
+                } else {
+                    setUser(null);
                 }
             } catch (error) {
-                console.error('Failed to load user session', error);
+                console.error('Failed to resolve user session', error);
+                setUser(null);
             } finally {
                 setLoading(false);
             }
-        };
-        loadUser();
+        });
+
+        return unsubscribe;
     }, []);
 
     const login = async (email, password) => {
         setLoading(true);
         try {
-            // Simulate a successful login
-            // In a real app, you would verify credentials on the backend
-            const role = email.includes('admin') ? 'admin' : (email.includes('barber') ? 'barber' : 'user');
-            const mockUser = {
-                id: 'user_' + email.replace(/[@.]/g, '_'),
-                email: email,
-                displayName: email.split('@')[0],
-                role: role
-            };
-
-            setUser(mockUser);
-            await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+            await signInWithEmailAndPassword(auth, email, password);
+            // onAuthStateChanged will handle setting the user state
         } catch (error) {
             console.error('Login error:', error);
             throw error;
@@ -52,7 +54,6 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         try {
             const { data } = await apiSignup(userData);
-            // After signup, we can automatically log them in or ask to login
             return data;
         } catch (error) {
             console.error('Signup error:', error);
@@ -63,8 +64,15 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
-        setUser(null);
-        await AsyncStorage.removeItem('user');
+        setLoading(true);
+        try {
+            await signOut(auth);
+            setUser(null);
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

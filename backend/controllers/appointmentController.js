@@ -110,4 +110,14 @@ const getAnalytics = async (req, res) => {
     }
 };
 
-module.exports = { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber };
+const deleteAppointment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.collection('appointments').doc(id).delete();
+        res.status(200).json({ message: 'Appointment deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber, deleteAppointment };

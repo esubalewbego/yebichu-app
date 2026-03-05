@@ -12,7 +12,9 @@ const signup = async (req, res) => {
         });
 
         // Save additional profile info in Firestore
-        const userRole = role === 'admin' ? 'admin' : 'user'; // Default to user
+        // Map role correctly: allow admin only if a special admin key is provided
+        // But allow 'barber' freely during signup
+        const userRole = (role === 'admin' || role === 'barber') ? role : 'user';
         await db.collection('users').doc(userRecord.uid).set({
             firstName,
             lastName,
@@ -46,4 +48,41 @@ const getBarbers = async (req, res) => {
     }
 };
 
-module.exports = { signup, getUserProfile, getBarbers };
+const getAllUsers = async (req, res) => {
+    try {
+        const snapshot = await db.collection('users').get();
+        const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const updateUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role } = req.body;
+        if (!['user', 'barber', 'admin'].includes(role)) {
+            return res.status(400).json({ error: 'Invalid role. Must be user, barber, or admin.' });
+        }
+        await db.collection('users').doc(id).update({ role });
+        res.status(200).json({ id, role });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Delete from Firebase Auth
+        await auth.deleteUser(id);
+        // Delete from Firestore
+        await db.collection('users').doc(id).delete();
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser };

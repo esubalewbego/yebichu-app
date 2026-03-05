@@ -31,14 +31,8 @@ export default function BarberDashboard() {
             const { data } = await getBarberAppointments(user?.uid || user?.id);
             setAppointments(data);
         } catch (error) {
-            console.error(error);
-            // Fallback for mock mode
-            const mockData = [
-                { id: 'b1', userName: 'Alex Johnson', service: 'fade Classic', time: '10:00 AM', status: 'pending' },
-                { id: 'b2', userName: 'Mike Ross', service: 'Beard Trim', time: '11:15 AM', status: 'pending' },
-                { id: 'b3', userName: 'Harvey Specter', service: 'Elite Grooming', time: '02:00 PM', status: 'completed' },
-            ];
-            setAppointments(mockData);
+            console.error('Failed to fetch Barber Schedule:', error);
+            setAppointments([]);
         } finally {
             setLoading(false);
         }
