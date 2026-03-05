@@ -6,9 +6,10 @@ import AdminDashboard from '../screens/AdminDashboard';
 import BarberDashboard from '../screens/BarberDashboard';
 import BarberHistoryScreen from '../screens/BarberHistoryScreen';
 import ManagePackagesScreen from '../screens/ManagePackagesScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
-import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase } from 'lucide-react-native';
+import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase, User } from 'lucide-react-native';
 import { View, ActivityIndicator } from 'react-native';
 
 const Tab = createBottomTabNavigator();
@@ -55,6 +56,13 @@ export default function TabNavigator() {
                             tabBarIcon: ({ color }) => <Clock color={color} size={24} />,
                         }}
                     />
+                    <Tab.Screen
+                        name="Profile"
+                        component={ProfileScreen}
+                        options={{
+                            tabBarIcon: ({ color }) => <User color={color} size={24} />,
+                        }}
+                    />
                 </>
             )}
 
@@ -74,6 +82,13 @@ export default function TabNavigator() {
                             tabBarIcon: ({ color }) => <Briefcase color={color} size={24} />,
                         }}
                     />
+                    <Tab.Screen
+                        name="Profile"
+                        component={ProfileScreen}
+                        options={{
+                            tabBarIcon: ({ color }) => <User color={color} size={24} />,
+                        }}
+                    />
                 </>
             )}
 
@@ -91,6 +106,13 @@ export default function TabNavigator() {
                         component={ManagePackagesScreen}
                         options={{
                             tabBarIcon: ({ color }) => <PackageSearch color={color} size={24} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="Profile"
+                        component={ProfileScreen}
+                        options={{
+                            tabBarIcon: ({ color }) => <User color={color} size={24} />,
                         }}
                     />
                 </>

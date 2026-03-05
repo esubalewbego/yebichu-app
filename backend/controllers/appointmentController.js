@@ -65,6 +65,26 @@ const updateAppointmentStatus = async (req, res) => {
     }
 };
 
+const assignBarber = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { barberId } = req.body;
+
+        if (!barberId) {
+            return res.status(400).json({ error: 'barberId is required' });
+        }
+
+        await db.collection('appointments').doc(id).update({
+            barberId,
+            status: 'assigned' // Auto-update status when a barber is assigned
+        });
+
+        res.status(200).json({ id, barberId, status: 'assigned' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const getAnalytics = async (req, res) => {
     try {
         const snapshot = await db.collection('appointments').get();
@@ -90,4 +110,4 @@ const getAnalytics = async (req, res) => {
     }
 };
 
-module.exports = { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics };
+module.exports = { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber };

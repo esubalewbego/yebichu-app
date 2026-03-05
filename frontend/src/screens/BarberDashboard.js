@@ -70,11 +70,11 @@ export default function BarberDashboard() {
 
             <View style={styles.cardBody}>
                 <View style={styles.userInitial}>
-                    <Text style={styles.initialText}>{item.userName[0]}</Text>
+                    <Text style={styles.initialText}>{(item.userName || 'C')[0].toUpperCase()}</Text>
                 </View>
                 <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{item.userName}</Text>
-                    <Text style={styles.serviceName}>{item.service}</Text>
+                    <Text style={styles.userName}>{item.userName || 'Customer'}</Text>
+                    <Text style={styles.serviceName}>{item.package?.name || item.service || 'Service'}</Text>
                 </View>
             </View>
 

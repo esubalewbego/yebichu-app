@@ -45,6 +45,8 @@ export const getBarberAppointments = (barberId) => api.get(`/appointments/barber
 export const getAllAppointments = () => api.get('/appointments/admin/all');
 export const getAdminAnalytics = () => api.get('/appointments/admin/analytics');
 export const updateAppointmentStatus = (id, status) => api.patch(`/appointments/admin/${id}/status`, { status });
+export const assignBarber = (id, barberId) => api.put(`/appointments/admin/${id}/assign`, { barberId });
+export const getBarbersList = () => api.get('/auth/barbers');
 
 // Payments
 export const initializePayment = (data) => api.post('/payments/initialize', data);

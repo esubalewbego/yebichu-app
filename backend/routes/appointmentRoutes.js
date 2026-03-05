@@ -1,5 +1,5 @@
 const express = require('express');
-const { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics } = require('../controllers/appointmentController');
+const { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber } = require('../controllers/appointmentController');
 const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -12,5 +12,6 @@ router.get('/barber/:barberId', authenticate, getBarberAppointments);
 router.get('/admin/all', authenticate, authorizeAdmin, getAllAppointments);
 router.get('/admin/analytics', authenticate, authorizeAdmin, getAnalytics);
 router.patch('/admin/:id/status', authenticate, authorizeAdmin, updateAppointmentStatus);
+router.put('/admin/:id/assign', authenticate, authorizeAdmin, assignBarber);
 
 module.exports = router;

@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, ScrollView, RefreshControl, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { getAllAppointments, updateAppointmentStatus, getAdminAnalytics } from '../services/api';
+import { getAllAppointments, updateAppointmentStatus, getAdminAnalytics, getBarbersList, assignBarber } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3 } from 'lucide-react-native';
+import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus } from 'lucide-react-native';
 
 export default function AdminDashboard({ navigation }) {
     const insets = useSafeAreaInsets();
     const [appointments, setAppointments] = useState([]);
     const [stats, setStats] = useState(null);
+    const [barbers, setBarbers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [assignModalVisible, setAssignModalVisible] = useState(false);
+    const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
     const { user } = useAuth();
 
     if (user?.role !== 'admin') {
@@ -28,8 +31,17 @@ export default function AdminDashboard({ navigation }) {
 
     const fetchData = async () => {
         setLoading(true);
-        await Promise.all([fetchAppointments(), fetchAnalytics()]);
+        await Promise.all([fetchAppointments(), fetchAnalytics(), fetchBarbers()]);
         setLoading(false);
+    };
+
+    const fetchBarbers = async () => {
+        try {
+            const { data } = await getBarbersList();
+            setBarbers(data);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const fetchAnalytics = async () => {
@@ -124,6 +136,17 @@ export default function AdminDashboard({ navigation }) {
             </View>
         );
     }
+
+    const handleAssignBarber = async (barberId) => {
+        try {
+            await assignBarber(selectedAppointmentId, barberId);
+            setAppointments(prev => prev.map(appt => appt.id === selectedAppointmentId ? { ...appt, status: 'assigned', barberId } : appt));
+            setAssignModalVisible(false);
+            Alert.alert('Success', 'Barber successfully assigned');
+        } catch (error) {
+            Alert.alert('Error', 'Failed to assign barber');
+        }
+    };
 
     return (
         <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -245,10 +268,13 @@ export default function AdminDashboard({ navigation }) {
                                 <View style={styles.actions}>
                                     <TouchableOpacity
                                         style={[styles.actionBtn, styles.approveBtn]}
-                                        onPress={() => handleStatusUpdate(item.id, 'completed')}
+                                        onPress={() => {
+                                            setSelectedAppointmentId(item.id);
+                                            setAssignModalVisible(true);
+                                        }}
                                     >
-                                        <CheckCircle color="#fff" size={18} />
-                                        <Text style={styles.actionBtnText}>Complete</Text>
+                                        <UserPlus color="#fff" size={18} />
+                                        <Text style={styles.actionBtnText}>Assign</Text>
                                     </TouchableOpacity>
 
                                     <TouchableOpacity
@@ -270,6 +296,40 @@ export default function AdminDashboard({ navigation }) {
                     )}
                 </View>
             </ScrollView>
+
+            <Modal visible={assignModalVisible} animationType="slide" transparent>
+                <View style={styles.modalBg}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalHeaderRow}>
+                            <Text style={styles.modalTitle}>Assign Barber</Text>
+                            <TouchableOpacity onPress={() => setAssignModalVisible(false)}>
+                                <XCircle color={COLORS.textSecondary} size={28} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {barbers.length === 0 ? (
+                            <Text style={styles.emptyText}>No registered barbers found.</Text>
+                        ) : (
+                            <FlatList
+                                data={barbers}
+                                keyExtractor={(item) => item.id}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={styles.barberSelectBtn}
+                                        onPress={() => handleAssignBarber(item.id)}
+                                    >
+                                        <View style={styles.userInitial}>
+                                            <Text style={styles.initialText}>{(item.firstName || 'B')[0].toUpperCase()}</Text>
+                                        </View>
+                                        <Text style={styles.barberNameText}>{item.firstName} {item.lastName}</Text>
+                                        <ChevronRight color={COLORS.textSecondary} size={20} />
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -518,5 +578,45 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: COLORS.background,
+    },
+    modalBg: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'flex-end',
+    },
+    modalContainer: {
+        backgroundColor: COLORS.card,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        minHeight: '50%',
+        maxHeight: '80%',
+    },
+    modalHeaderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        color: COLORS.text,
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    barberSelectBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.background,
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    barberNameText: {
+        flex: 1,
+        color: COLORS.text,
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
