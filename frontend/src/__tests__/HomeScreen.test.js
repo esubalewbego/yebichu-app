@@ -34,12 +34,19 @@ jest.mock('../services/api', () => ({
 }));
 
 const React = require('react');
-const { render } = require('@testing-library/react-native');
+const { render, waitFor } = require('@testing-library/react-native');
 const HomeScreen = require('../screens/HomeScreen').default;
 
 describe('HomeScreen Component', () => {
-    it('renders correctly', () => {
-        const { getByText } = render(<HomeScreen />);
-        expect(getByText(/Extraordinary/i)).toBeTruthy();
+    it('renders correctly', async () => {
+        const { getByText, findByText } = render(<HomeScreen />);
+        // When initially rendered, loading state is true, so finding "Studio Open" (present in header) is instantaneous
+        expect(getByText(/Studio Open/i)).toBeTruthy();
+
+        // Wait for fetch data to resolve and loading to finish
+        // Since getPackages and getStyles return empty, we just wait for it not to crash
+        await waitFor(() => {
+            expect(getByText(/Packages/i)).toBeTruthy();
+        });
     });
 });
