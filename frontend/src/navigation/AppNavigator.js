@@ -25,10 +25,6 @@ export default function AppNavigator() {
                             <Stack.Screen name="Payment" component={PaymentScreen} />
                         </>
                     )}
-
-                    {user.role === 'admin' && (
-                        <Stack.Screen name="ManagePackages" component={ManagePackagesScreen} />
-                    )}
                 </>
             ) : (
                 <Stack.Screen name="Auth" component={AuthNavigator} />

@@ -4,9 +4,11 @@ import HomeScreen from '../screens/HomeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import AdminDashboard from '../screens/AdminDashboard';
 import BarberDashboard from '../screens/BarberDashboard';
+import BarberHistoryScreen from '../screens/BarberHistoryScreen';
+import ManagePackagesScreen from '../screens/ManagePackagesScreen';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
-import { Home, Clock, ShieldCheck, Scissors, CalendarDays, Loader2 } from 'lucide-react-native';
+import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase } from 'lucide-react-native';
 import { View, ActivityIndicator } from 'react-native';
 
 const Tab = createBottomTabNavigator();
@@ -47,7 +49,7 @@ export default function TabNavigator() {
                         }}
                     />
                     <Tab.Screen
-                        name="History"
+                        name="My Bookings"
                         component={HistoryScreen}
                         options={{
                             tabBarIcon: ({ color }) => <Clock color={color} size={24} />,
@@ -59,17 +61,17 @@ export default function TabNavigator() {
             {user?.role === 'barber' && (
                 <>
                     <Tab.Screen
-                        name="Schedule"
+                        name="Active Jobs"
                         component={BarberDashboard}
                         options={{
                             tabBarIcon: ({ color }) => <CalendarDays color={color} size={24} />,
                         }}
                     />
                     <Tab.Screen
-                        name="History"
-                        component={HistoryScreen}
+                        name="Performance"
+                        component={BarberHistoryScreen}
                         options={{
-                            tabBarIcon: ({ color }) => <Clock color={color} size={24} />,
+                            tabBarIcon: ({ color }) => <Briefcase color={color} size={24} />,
                         }}
                     />
                 </>
@@ -78,29 +80,28 @@ export default function TabNavigator() {
             {user?.role === 'admin' && (
                 <>
                     <Tab.Screen
-                        name="Admin"
+                        name="Analytics"
                         component={AdminDashboard}
                         options={{
-                            tabBarLabel: 'Admin',
                             tabBarIcon: ({ color }) => <ShieldCheck color={color} size={24} />,
                         }}
                     />
                     <Tab.Screen
-                        name="Overview"
-                        component={HomeScreen}
+                        name="Manage DB"
+                        component={ManagePackagesScreen}
                         options={{
-                            tabBarLabel: 'Home',
-                            tabBarIcon: ({ color }) => <Home color={color} size={24} />,
+                            tabBarIcon: ({ color }) => <PackageSearch color={color} size={24} />,
                         }}
                     />
                 </>
             )}
+
             {(!user || !user.role) && (
                 <Tab.Screen
                     name="Wait"
                     component={HomeScreen}
                     options={{
-                        tabBarIcon: ({ color }) => <Home color={color} size={24} />,
+                        tabBarIcon: ({ color }) => <Loader2 color={color} size={24} />,
                     }}
                 />
             )}

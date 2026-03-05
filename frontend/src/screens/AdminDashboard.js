@@ -191,7 +191,7 @@ export default function AdminDashboard({ navigation }) {
                     <View style={styles.mgmtGrid}>
                         <TouchableOpacity
                             style={styles.mgmtCard}
-                            onPress={() => navigation.navigate('ManagePackages')}
+                            onPress={() => navigation.navigate('Manage DB')}
                         >
                             <View style={[styles.iconBox, { backgroundColor: COLORS.primary + '15' }]}>
                                 <Package color={COLORS.primary} size={28} />
