@@ -6,6 +6,7 @@ import { COLORS } from '../theme/colors';
 import { getPackages, createPackage, updatePackage, deletePackage, uploadImage } from '../services/api';
 import { Plus, Edit3, Trash2, X, Check, Package, Clock, DollarSign, AlignLeft, ChevronLeft, Image as ImageIcon } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
+import CustomButton from '../components/Button';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ManagePackagesScreen() {
