@@ -45,13 +45,19 @@ export default function PaymentScreen({ route, navigation }) {
         try {
             const txRef = `tx-${Date.now()}`;
 
+            const safeEmail = (user?.email && user.email.includes('@')) ? user.email.trim() : 'customer@yebichu.com';
+            const safeFirstName = (user?.firstName || user?.displayName?.split(' ')[0] || 'Customer').trim();
+            const safeLastName = (user?.lastName || user?.displayName?.split(' ')[1] || 'User').trim();
+            const safePhone = (user?.phoneNumber && user.phoneNumber.length >= 9) ? user.phoneNumber.trim() : '0900123456';
+            const safeAmount = item?.price ? Number(item.price).toString() : '100';
+
             const paymentData = {
-                amount: item.price,
+                amount: safeAmount,
                 currency: 'ETB',
-                email: user?.email || 'test@gmail.com',
-                first_name: user?.firstName || user?.displayName?.split(' ')[0] || 'Customer',
-                last_name: user?.lastName || user?.displayName?.split(' ')[1] || 'User',
-                phone_number: user?.phoneNumber || '0900123456',
+                email: safeEmail,
+                first_name: safeFirstName,
+                last_name: safeLastName,
+                phone_number: safePhone,
                 tx_ref: txRef,
                 callback_url: 'https://webhook.site/placeholder', // Backend webhook
                 return_url: 'https://www.google.com/', // Must be a valid HTTP URL for Chapa
@@ -80,8 +86,9 @@ export default function PaymentScreen({ route, navigation }) {
             }
 
         } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Payment initialization failed. Please try again.');
+            console.error('Payment Error Details:', error.response?.data || error.message);
+            const errDetails = error.response?.data?.error || error.response?.data || error.message;
+            Alert.alert('Checkout Error', `Failed to open Chapa. Details: ${JSON.stringify(errDetails)}`);
         } finally {
             setLoading(false);
         }
