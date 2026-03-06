@@ -15,8 +15,10 @@ export const AuthProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             try {
                 if (firebaseUser) {
+                    console.log('Firebase User detected, fetching profile for:', firebaseUser.uid);
                     // Fetch additional role data from our backend
                     const { data } = await getUserProfile(firebaseUser.uid);
+                    console.log('User Role Resolved:', data.role);
                     setUser({
                         uid: firebaseUser.uid,
                         email: firebaseUser.email,
@@ -41,12 +43,11 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            // onAuthStateChanged will handle setting the user state
+            // onAuthStateChanged will trigger and handle setting the user state and loading(false)
         } catch (error) {
+            setLoading(false); // Only set to false on error, otherwise let the listener handle it
             console.error('Login error:', error);
             throw error;
-        } finally {
-            setLoading(false);
         }
     };
 

@@ -18,6 +18,9 @@ const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
     const { user, loading } = useAuth();
+    const role = user?.role?.toLowerCase();
+
+    console.log('TabNavigator Rendering for role:', role);
 
     if (loading) {
         return (
@@ -42,7 +45,7 @@ export default function TabNavigator() {
                 tabBarInactiveTintColor: COLORS.textSecondary,
             }}
         >
-            {user?.role === 'user' && (
+            {role === 'user' && (
                 <>
                     <Tab.Screen
                         name="Home"
@@ -68,7 +71,7 @@ export default function TabNavigator() {
                 </>
             )}
 
-            {user?.role === 'barber' && (
+            {role === 'barber' && (
                 <>
                     <Tab.Screen
                         name="Active Jobs"
@@ -94,7 +97,7 @@ export default function TabNavigator() {
                 </>
             )}
 
-            {user?.role === 'admin' && (
+            {role === 'admin' && (
                 <>
                     <Tab.Screen
                         name="Analytics"
@@ -134,7 +137,7 @@ export default function TabNavigator() {
                 </>
             )}
 
-            {(!user || !user.role) && (
+            {!role && (
                 <Tab.Screen
                     name="Wait"
                     component={HomeScreen}
