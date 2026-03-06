@@ -53,13 +53,12 @@ export default function AdminDashboard({ navigation }) {
             setStats({
                 totalAppointments: 0,
                 totalRevenue: 0,
-                completedAppointments: 0,
-                pendingAppointments: 0,
-                thisMonthRevenue: 0
+                completed: 0,
+                pending: 0,
+                cancelled: 0,
+                monthlyRevenue: 0,
+                averageTicketSize: 0
             });
-            setAppointments([]);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -262,8 +261,8 @@ export default function AdminDashboard({ navigation }) {
                                     <Text style={styles.initialText}>{(item.userName || 'C')[0].toUpperCase()}</Text>
                                 </View>
                                 <View style={styles.cardInfo}>
-                                    <Text style={styles.userName}>{item.userName || 'Customer'}</Text>
-                                    <Text style={styles.serviceName}>{item.service}</Text>
+                                    <Text style={styles.userName}>{item.userEmail || item.userName || 'Customer'}</Text>
+                                    <Text style={styles.serviceName}>{item.item?.name || item.service || 'Grooming Service'}</Text>
                                 </View>
                                 <StatusBadge status={item.status} />
                             </View>

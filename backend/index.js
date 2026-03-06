@@ -20,7 +20,8 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/packages', require('./routes/packageRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes')); // Added uploadRoutes
+app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
 
 // Start Server
 if (require.main === module) {

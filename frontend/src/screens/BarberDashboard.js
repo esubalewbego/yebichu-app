@@ -64,11 +64,11 @@ export default function BarberDashboard() {
 
             <View style={styles.cardBody}>
                 <View style={styles.userInitial}>
-                    <Text style={styles.initialText}>{(item.userName || 'C')[0].toUpperCase()}</Text>
+                    <Text style={styles.initialText}>{(item.userEmail || item.userName || 'C')[0].toUpperCase()}</Text>
                 </View>
                 <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{item.userName || 'Customer'}</Text>
-                    <Text style={styles.serviceName}>{item.package?.name || item.service || 'Service'}</Text>
+                    <Text style={styles.userName}>{item.userEmail || item.userName || 'Customer'}</Text>
+                    <Text style={styles.serviceName}>{item.item?.name || item.service || 'Grooming Service'}</Text>
                 </View>
             </View>
 

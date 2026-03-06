@@ -208,21 +208,20 @@ export default function PaymentScreen({ route, navigation }) {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.methodCard, user?.role !== 'admin' && { opacity: 0.6 }]}
                         onPress={() => {
-                            if (user?.role === 'admin') handlePayment('cash');
-                            else Alert.alert('Restricted', 'Cash at Studio is only available for Admin bookings.');
+                            if (user?.role === 'barber') handlePayment('cash');
+                            else Alert.alert('Restricted', 'Cash at Studio is only available for Barbers to register payments.');
                         }}
-                        disabled={loading || user?.role !== 'admin'}
+                        disabled={loading || user?.role !== 'barber'}
                     >
                         <View style={styles.methodIconBox}>
-                            <Smartphone color={user?.role === 'admin' ? COLORS.primary : COLORS.textSecondary} size={24} />
+                            <Smartphone color={user?.role === 'barber' ? COLORS.primary : COLORS.textSecondary} size={24} />
                         </View>
                         <View style={styles.methodInfo}>
-                            <Text style={[styles.methodName, user?.role !== 'admin' && { color: COLORS.textSecondary }]}>Cash at Studio</Text>
-                            <Text style={styles.methodSub}>{user?.role === 'admin' ? 'Pay directly at the studio' : 'Admin only feature'}</Text>
+                            <Text style={[styles.methodName, user?.role !== 'barber' && { color: COLORS.textSecondary }]}>Cash at Studio</Text>
+                            <Text style={styles.methodSub}>{user?.role === 'barber' ? 'Register a cash payment' : 'Barber-only feature'}</Text>
                         </View>
-                        {user?.role === 'admin' && (
+                        {user?.role === 'barber' && (
                             <View style={styles.actionArrow}>
                                 <ChevronLeft color={COLORS.primary} size={20} style={{ transform: [{ rotate: '180deg' }] }} />
                             </View>
