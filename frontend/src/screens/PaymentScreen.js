@@ -13,13 +13,13 @@ export default function PaymentScreen({ route, navigation }) {
     const { item, date, time, barberId } = route.params;
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('chapa');
     const { user } = useAuth();
 
-    const handlePayment = async () => {
-        if (paymentMethod === 'cash') {
+    const handlePayment = async (method) => {
+        if (method === 'cash') {
             setLoading(true);
             try {
+                const txRef = `cash-${Date.now()}`;
                 await createAppointment({
                     userId: user?.uid || user?.id || 'anonymous',
                     barberId,
@@ -27,12 +27,13 @@ export default function PaymentScreen({ route, navigation }) {
                     date,
                     time,
                     status: 'paid',
-                    tx_ref: `cash-${Date.now()}`
+                    tx_ref: txRef
                 });
                 Alert.alert('Success', 'Appointment confirmed with Cash payment.', [
                     { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
                 ]);
             } catch (error) {
+                console.error(error);
                 Alert.alert('Error', 'Failed to confirm appointment.');
             } finally {
                 setLoading(false);
@@ -163,31 +164,32 @@ export default function PaymentScreen({ route, navigation }) {
                 </View>
 
                 <View style={styles.methodSection}>
-                    <Text style={styles.sectionTitle}>Payment Method</Text>
+                    <Text style={styles.sectionTitle}>Select Payment Method</Text>
 
                     <TouchableOpacity
-                        style={[styles.methodCard, paymentMethod === 'chapa' && styles.activeMethod]}
-                        onPress={() => setPaymentMethod('chapa')}
+                        style={styles.methodCard}
+                        onPress={() => handlePayment('chapa')}
+                        disabled={loading}
                     >
                         <View style={styles.methodIconBox}>
                             <CreditCard color={COLORS.primary} size={24} />
                         </View>
                         <View style={styles.methodInfo}>
-                            <Text style={styles.methodName}>Chapa Payment</Text>
+                            <Text style={styles.methodName}>{loading ? "Processing..." : "Chapa Payment"}</Text>
                             <Text style={styles.methodSub}>Telebirr, Cards, Mobile Banking</Text>
                         </View>
-                        <View style={paymentMethod === 'chapa' ? styles.radioActive : styles.radioInactive}>
-                            {paymentMethod === 'chapa' && <View style={styles.radioInner} />}
+                        <View style={styles.actionArrow}>
+                            <ChevronLeft color={COLORS.primary} size={20} style={{ transform: [{ rotate: '180deg' }] }} />
                         </View>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.methodCard, paymentMethod === 'cash' && styles.activeMethod]}
+                        style={[styles.methodCard, user?.role !== 'admin' && { opacity: 0.6 }]}
                         onPress={() => {
-                            if (user?.role === 'admin') setPaymentMethod('cash');
+                            if (user?.role === 'admin') handlePayment('cash');
                             else Alert.alert('Restricted', 'Cash at Studio is only available for Admin bookings.');
                         }}
-                        disabled={user?.role !== 'admin'}
+                        disabled={loading || user?.role !== 'admin'}
                     >
                         <View style={styles.methodIconBox}>
                             <Smartphone color={user?.role === 'admin' ? COLORS.primary : COLORS.textSecondary} size={24} />
@@ -196,9 +198,11 @@ export default function PaymentScreen({ route, navigation }) {
                             <Text style={[styles.methodName, user?.role !== 'admin' && { color: COLORS.textSecondary }]}>Cash at Studio</Text>
                             <Text style={styles.methodSub}>{user?.role === 'admin' ? 'Pay directly at the studio' : 'Admin only feature'}</Text>
                         </View>
-                        <View style={paymentMethod === 'cash' ? styles.radioActive : styles.radioInactive}>
-                            {paymentMethod === 'cash' && <View style={styles.radioInner} />}
-                        </View>
+                        {user?.role === 'admin' && (
+                            <View style={styles.actionArrow}>
+                                <ChevronLeft color={COLORS.primary} size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                            </View>
+                        )}
                     </TouchableOpacity>
                 </View>
 
@@ -213,14 +217,6 @@ export default function PaymentScreen({ route, navigation }) {
                     </View>
                 </View>
             </ScrollView>
-
-            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-                <CustomButton
-                    title={loading ? "Processing..." : `Confirm Payment`}
-                    onPress={handlePayment}
-                    disabled={loading}
-                />
-            </View>
         </View>
     );
 }
@@ -361,78 +357,12 @@ const styles = StyleSheet.create({
         borderColor: '#333',
         marginBottom: 16,
     },
-    activeMethod: {
-        borderColor: COLORS.primary,
-        backgroundColor: COLORS.primary + '05',
-    },
-    methodIconBox: {
-        width: 52,
-        height: 52,
-        borderRadius: 14,
-        backgroundColor: COLORS.background,
+    actionArrow: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: COLORS.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
-        borderWidth: 1,
-        borderColor: '#333',
-    },
-    methodInfo: {
-        flex: 1,
-    },
-    methodName: {
-        color: COLORS.text,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    methodSub: {
-        color: COLORS.textSecondary,
-        fontSize: 12,
-        marginTop: 2,
-    },
-    radioActive: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        borderWidth: 2,
-        borderColor: COLORS.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    radioInner: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: COLORS.primary,
-    },
-    radioInactive: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        borderWidth: 1,
-        borderColor: '#444',
-    },
-    trustFooter: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 32,
-        marginTop: 10,
-    },
-    trustItem: {
-        alignItems: 'center',
-        gap: 8,
-    },
-    trustText: {
-        color: COLORS.textSecondary,
-        fontSize: 11,
-        fontWeight: '500',
-    },
-    footer: {
-        padding: 24,
-        paddingBottom: 40,
-        backgroundColor: COLORS.background,
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
     },
 });
