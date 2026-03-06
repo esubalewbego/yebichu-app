@@ -37,10 +37,10 @@ export default function ChatListScreen({ navigation }) {
                 <View style={styles.avatar}>
                     <User color={COLORS.primary} size={24} />
                 </View>
-                <div style={styles.convoInfo}>
+                <View style={styles.convoInfo}>
                     <Text style={styles.convoTitle}>Customer Support Chat</Text>
                     <Text style={styles.lastMsg} numberOfLines={1}>{item.lastMessage || 'No messages yet'}</Text>
-                </div>
+                </View>
                 <View style={styles.convoMeta}>
                     <Text style={styles.timeText}>{item.lastUpdate ? new Date(item.lastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</Text>
                     <ChevronRight color={COLORS.textSecondary} size={20} />
