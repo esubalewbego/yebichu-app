@@ -25,6 +25,7 @@ export default function PaymentScreen({ route, navigation }) {
             setLoading(true);
             try {
                 const txRef = `cash-${Date.now()}`;
+                const isBarber = user?.role?.toLowerCase() === 'barber';
                 await createAppointment({
                     userId: user?.uid || user?.id || 'anonymous',
                     userName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
@@ -33,7 +34,7 @@ export default function PaymentScreen({ route, navigation }) {
                     item,
                     date,
                     time,
-                    status: 'paid',
+                    status: isBarber ? 'paid' : 'pending', // Barbers settle immediately, customers pay later
                     tx_ref: txRef
                 });
                 setPaymentStatus('success');
@@ -208,25 +209,20 @@ export default function PaymentScreen({ route, navigation }) {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.methodCard, user?.role !== 'barber' && { opacity: 0.5 }]}
-                        onPress={() => {
-                            if (user?.role === 'barber') handlePayment('cash');
-                            else Alert.alert('Restricted', 'Cash at Studio is only available for Barbers.');
-                        }}
-                        disabled={loading || user?.role !== 'barber'}
+                        style={styles.methodCard}
+                        onPress={() => handlePayment('cash')}
+                        disabled={loading}
                     >
                         <View style={styles.methodIconBox}>
-                            <Smartphone color={user?.role === 'barber' ? COLORS.primary : COLORS.textSecondary} size={24} />
+                            <Smartphone color={COLORS.primary} size={24} />
                         </View>
                         <View style={styles.methodInfo}>
-                            <Text style={[styles.methodName, user?.role !== 'barber' && { color: COLORS.textSecondary }]}>Cash at Studio</Text>
-                            <Text style={styles.methodSub}>{user?.role === 'barber' ? 'Register a cash payment' : 'Barber-only feature'}</Text>
+                            <Text style={styles.methodName}>Cash at Studio</Text>
+                            <Text style={styles.methodSub}>Pay after your session</Text>
                         </View>
-                        {user?.role === 'barber' && (
-                            <View style={styles.actionArrow}>
-                                <ChevronLeft color={COLORS.primary} size={20} style={{ transform: [{ rotate: '180deg' }] }} />
-                            </View>
-                        )}
+                        <View style={styles.actionArrow}>
+                            <ChevronLeft color={COLORS.primary} size={20} style={{ transform: [{ rotate: '180deg' }] }} />
+                        </View>
                     </TouchableOpacity>
                 </View>
 
