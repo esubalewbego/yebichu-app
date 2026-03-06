@@ -29,6 +29,10 @@ const initializePayment = async (req, res) => {
 
     res.status(200).json(response.data);
   } catch (error) {
+    console.error('---- CHAPA INITIALIZE ERROR ----');
+    console.error('Request Body:', req.body);
+    console.error('Error Details:', error.response ? error.response.data : error.message);
+    console.error('--------------------------------');
     res.status(500).json({
       error: error.response ? error.response.data : error.message
     });

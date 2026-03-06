@@ -57,8 +57,12 @@ export const updateUserRole = (id, role) => api.patch(`/auth/users/${id}/role`, 
 export const deleteUserById = (id) => api.delete(`/auth/users/${id}`);
 export const getUserProfile = (uid) => api.get(`/auth/profile/${uid}`);
 
-// Payments
 export const initializePayment = (data) => api.post('/payments/initialize', data);
 export const verifyPayment = (txRef) => api.get(`/payments/verify/${txRef}`);
+
+// Chat
+export const sendMessage = (data) => api.post('/chat/send', data);
+export const getConversations = () => api.get('/chat/conversations');
+export const getMessages = (conversationId) => api.get(`/chat/messages/${conversationId}`);
 
 export default api;

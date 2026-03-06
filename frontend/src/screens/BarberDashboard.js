@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
-import { Scissors, Clock, CheckCircle } from 'lucide-react-native';
+import { Scissors, Clock, CheckCircle, MessageSquare } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
@@ -95,9 +95,17 @@ export default function BarberDashboard() {
                         <Text style={styles.headerTitle}>Barber Portal</Text>
                         <Text style={styles.headerSub}>Today's Schedule</Text>
                     </View>
-                    <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-                        <Text style={styles.logoutText}>Logout</Text>
-                    </TouchableOpacity>
+                    <View style={styles.headerRight}>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('Chat', { receiverId: 'admin_uid_fallback' })}
+                            style={[styles.logoutBtn, { marginRight: 10, borderColor: COLORS.primary + '40' }]}
+                        >
+                            <MessageSquare color={COLORS.primary} size={18} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+                            <Text style={styles.logoutText}>Logout</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 <View style={styles.statsRow}>
@@ -144,6 +152,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 10,
         paddingBottom: 20,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     headerGradient: {
         paddingBottom: 24,

@@ -8,9 +8,10 @@ import BarberHistoryScreen from '../screens/BarberHistoryScreen';
 import ManagePackagesScreen from '../screens/ManagePackagesScreen';
 import ManageUsersScreen from '../screens/ManageUsersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ChatListScreen from '../screens/ChatListScreen';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
-import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase, User, Users } from 'lucide-react-native';
+import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase, User, Users, MessageSquare } from 'lucide-native';
 import { View, ActivityIndicator } from 'react-native';
 
 const Tab = createBottomTabNavigator();
@@ -107,6 +108,13 @@ export default function TabNavigator() {
                         component={ManagePackagesScreen}
                         options={{
                             tabBarIcon: ({ color }) => <PackageSearch color={color} size={24} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="Messages"
+                        component={ChatListScreen}
+                        options={{
+                            tabBarIcon: ({ color }) => <MessageSquare color={color} size={24} />,
                         }}
                     />
                     <Tab.Screen

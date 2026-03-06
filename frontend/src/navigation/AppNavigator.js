@@ -6,6 +6,8 @@ import TabNavigator from './TabNavigator';
 import BookingScreen from '../screens/BookingScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import ManagePackagesScreen from '../screens/ManagePackagesScreen';
+import ChatScreen from '../screens/ChatScreen';
+import ChatListScreen from '../screens/ChatListScreen';
 
 const Stack = createStackNavigator();
 
@@ -18,8 +20,18 @@ export default function AppNavigator() {
                 <>
                     <Stack.Screen name="MainTabs" component={TabNavigator} />
 
+                    {/* Shared Authenticated Screens */}
+                    <Stack.Screen name="Chat" component={ChatScreen} />
+
                     {/* Role-Specific Private Screens */}
-                    {(user.role === 'user' || user.role === 'admin') && (
+                    {user.role === 'admin' && (
+                        <>
+                            <Stack.Screen name="ChatList" component={ChatListScreen} />
+                            <Stack.Screen name="Services" component={ManagePackagesScreen} />
+                        </>
+                    )}
+
+                    {(user.role === 'user' || user.role === 'admin' || user.role === 'barber') && (
                         <>
                             <Stack.Screen name="Booking" component={BookingScreen} />
                             <Stack.Screen name="Payment" component={PaymentScreen} />

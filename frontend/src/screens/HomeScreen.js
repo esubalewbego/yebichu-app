@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
 import { getPackages, getStyles } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart, Filter } from 'lucide-react-native';
+import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart, Filter, MessageSquare } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen({ navigation }) {
@@ -105,6 +105,12 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.userNameText}>{user?.displayName || user?.email?.split('@')[0] || 'Gentleman'}</Text>
                     </View>
                     <View style={styles.headerRight}>
+                        <TouchableOpacity
+                            style={styles.iconBtn}
+                            onPress={() => navigation.navigate('Chat', { receiverId: 'admin_uid_fallback' })}
+                        >
+                            <MessageSquare color={COLORS.primary} size={22} />
+                        </TouchableOpacity>
                         <TouchableOpacity style={styles.iconBtn}>
                             <Bell color={COLORS.text} size={22} />
                             <View style={styles.notifDot} />
