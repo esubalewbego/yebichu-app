@@ -48,13 +48,13 @@ export default function PaymentScreen({ route, navigation }) {
             const paymentData = {
                 amount: item.price,
                 currency: 'ETB',
-                email: user?.email || 'customer@gmail.com',
+                email: user?.email || 'test@gmail.com',
                 first_name: user?.firstName || user?.displayName?.split(' ')[0] || 'Customer',
                 last_name: user?.lastName || user?.displayName?.split(' ')[1] || 'User',
-                phone_number: user?.phoneNumber || '0912345678',
+                phone_number: user?.phoneNumber || '0900123456',
                 tx_ref: txRef,
                 callback_url: 'https://webhook.site/placeholder', // Backend webhook
-                return_url: 'barbershop://payment-complete', // Deep link back to the app
+                return_url: 'https://www.google.com/', // Must be a valid HTTP URL for Chapa
             };
 
             const { data } = await initializePayment(paymentData);
