@@ -2,7 +2,7 @@ const { db } = require('../config/firebase');
 
 const createAppointment = async (req, res) => {
     try {
-        const { userId, barberId, date, time, packageId, styleId, status } = req.body;
+        const { userId, barberId, date, time, packageId, styleId, status, item, price } = req.body;
 
         const appointment = {
             userId,
@@ -11,6 +11,8 @@ const createAppointment = async (req, res) => {
             time,
             packageId,
             styleId,
+            item: item || null,
+            price: price || item?.price || 0,
             status: status || 'pending',
             createdAt: new Date().toISOString(),
         };
@@ -93,19 +95,28 @@ const getAnalytics = async (req, res) => {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-        const completedOrPaid = appointments.filter(a => a.status === 'completed' || a.status === 'paid');
+        const completedOrPaid = appointments.filter(a => {
+            const s = a.status?.toLowerCase();
+            return s === 'completed' || s === 'paid';
+        });
 
-        const totalRevenue = completedOrPaid.reduce((sum, a) => sum + (Number(a.item?.price) || 0), 0);
+        const totalRevenue = completedOrPaid.reduce((sum, a) => sum + (Number(a.item?.price || a.price) || 0), 0);
 
         const monthlyRevenue = completedOrPaid
-            .filter(a => a.createdAt >= startOfMonth || a.date >= startOfMonth.split('T')[0])
-            .reduce((sum, a) => sum + (Number(a.item?.price) || 0), 0);
+            .filter(a => {
+                const apptDate = new Date(a.date || a.createdAt);
+                return apptDate >= new Date(startOfMonth);
+            })
+            .reduce((sum, a) => sum + (Number(a.item?.price || a.price) || 0), 0);
 
         const stats = {
             totalAppointments: appointments.length,
-            completed: appointments.filter(a => a.status === 'completed').length,
-            pending: appointments.filter(a => a.status === 'pending').length,
-            cancelled: appointments.filter(a => a.status === 'cancelled').length,
+            completed: appointments.filter(a => a.status?.toLowerCase() === 'completed').length,
+            pending: appointments.filter(a => {
+                const s = a.status?.toLowerCase();
+                return s === 'pending' || s === 'assigned';
+            }).length,
+            cancelled: appointments.filter(a => a.status?.toLowerCase() === 'cancelled').length,
             totalRevenue: totalRevenue,
             monthlyRevenue: monthlyRevenue,
             averageTicketSize: completedOrPaid.length > 0 ? totalRevenue / completedOrPaid.length : 0

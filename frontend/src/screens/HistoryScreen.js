@@ -7,7 +7,7 @@ import { CalendarCheck, Clock, CheckCircle2, ChevronRight, Scissors, AlertCircle
 import { useAuth } from '../context/AuthContext';
 import { getUserAppointments } from '../services/api';
 
-export default function HistoryScreen() {
+export default function HistoryScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const [appointments, setAppointments] = useState([]);

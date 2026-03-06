@@ -27,6 +27,8 @@ export default function PaymentScreen({ route, navigation }) {
                 const txRef = `cash-${Date.now()}`;
                 await createAppointment({
                     userId: user?.uid || user?.id || 'anonymous',
+                    userName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
+                    userEmail: user?.email || '',
                     barberId,
                     item,
                     date,
@@ -119,6 +121,8 @@ export default function PaymentScreen({ route, navigation }) {
             if (data.status === 'success') {
                 await createAppointment({
                     userId: user?.uid || user?.id || 'anonymous',
+                    userName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
+                    userEmail: user?.email || '',
                     barberId,
                     item,
                     date,
