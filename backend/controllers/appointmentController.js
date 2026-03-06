@@ -90,8 +90,15 @@ const getAnalytics = async (req, res) => {
         const snapshot = await db.collection('appointments').get();
         const appointments = snapshot.docs.map(doc => doc.data());
 
-        const totalRevenue = appointments
-            .filter(a => a.status === 'completed' || a.status === 'paid')
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        const completedOrPaid = appointments.filter(a => a.status === 'completed' || a.status === 'paid');
+
+        const totalRevenue = completedOrPaid.reduce((sum, a) => sum + (Number(a.item?.price) || 0), 0);
+
+        const monthlyRevenue = completedOrPaid
+            .filter(a => a.createdAt >= startOfMonth || a.date >= startOfMonth.split('T')[0])
             .reduce((sum, a) => sum + (Number(a.item?.price) || 0), 0);
 
         const stats = {
@@ -100,8 +107,8 @@ const getAnalytics = async (req, res) => {
             pending: appointments.filter(a => a.status === 'pending').length,
             cancelled: appointments.filter(a => a.status === 'cancelled').length,
             totalRevenue: totalRevenue,
-            monthlyRevenue: totalRevenue * 0.8, // Simplified mock for demo
-            averageTicketSize: appointments.length > 0 ? totalRevenue / appointments.length : 0
+            monthlyRevenue: monthlyRevenue,
+            averageTicketSize: completedOrPaid.length > 0 ? totalRevenue / completedOrPaid.length : 0
         };
 
         res.status(200).json(stats);

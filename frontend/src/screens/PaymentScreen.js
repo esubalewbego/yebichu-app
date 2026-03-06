@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { CreditCard, ChevronLeft, ShieldCheck, CheckCircle2, Lock, Smartphone, X } from 'lucide-react-native';
+import { ChevronLeft, CreditCard, Smartphone, Lock, CheckCircle2, ShieldCheck, XCircle } from 'lucide-react-native';
 import { WebView } from 'react-native-webview';
 import CustomButton from '../components/Button';
 import { initializePayment, verifyPayment, createAppointment } from '../services/api';
@@ -17,6 +17,8 @@ export default function PaymentScreen({ route, navigation }) {
     const [showWebView, setShowWebView] = useState(false);
     const [currentTxRef, setCurrentTxRef] = useState(null);
     const { user } = useAuth();
+
+    const [paymentStatus, setPaymentStatus] = useState(null); // 'success' | 'error' | null
 
     const handlePayment = async (method) => {
         if (method === 'cash') {
@@ -32,12 +34,10 @@ export default function PaymentScreen({ route, navigation }) {
                     status: 'paid',
                     tx_ref: txRef
                 });
-                Alert.alert('Success', 'Appointment confirmed with Cash payment.', [
-                    { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
-                ]);
+                setPaymentStatus('success');
             } catch (error) {
                 console.error(error);
-                Alert.alert('Error', 'Failed to confirm appointment.');
+                setPaymentStatus('error');
             } finally {
                 setLoading(false);
             }
@@ -49,8 +49,8 @@ export default function PaymentScreen({ route, navigation }) {
             const txRef = `tx-${Date.now()}`;
 
             const safeEmail = (user?.email && user.email.includes('@')) ? user.email.trim() : 'customer@yebichu.com';
-            const safeFirstName = (user?.firstName || user?.displayName?.split(' ')[0] || 'Customer').trim();
-            const safeLastName = (user?.lastName || user?.displayName?.split(' ')[1] || 'User').trim();
+            const safeFirstName = (user?.displayName?.split(' ')[0] || 'Customer').trim();
+            const safeLastName = (user?.displayName?.split(' ')[1] || 'User').trim();
             const safePhone = (user?.phoneNumber && user.phoneNumber.length >= 9) ? user.phoneNumber.trim() : '0900123456';
             const safeAmount = item?.price ? Number(item.price).toString() : '100';
 
@@ -62,8 +62,8 @@ export default function PaymentScreen({ route, navigation }) {
                 last_name: safeLastName,
                 phone_number: safePhone,
                 tx_ref: txRef,
-                callback_url: 'https://webhook.site/placeholder', // Backend webhook
-                return_url: 'https://www.google.com/', // Must be a valid HTTP URL for Chapa
+                callback_url: 'https://webhook.site/placeholder',
+                return_url: 'https://www.google.com/',
             };
 
             const { data } = await initializePayment(paymentData);
@@ -80,7 +80,7 @@ export default function PaymentScreen({ route, navigation }) {
         } catch (error) {
             console.error('Payment Error Details:', error.response?.data || error.message);
             const errDetails = error.response?.data?.error || error.response?.data || error.message;
-            Alert.alert('Checkout Error', `Failed to open Chapa. Details: ${JSON.stringify(errDetails)}`);
+            setPaymentStatus('error');
             setLoading(false);
         }
     };
@@ -127,16 +127,12 @@ export default function PaymentScreen({ route, navigation }) {
                     tx_ref: txRef
                 });
 
-                Alert.alert('Success', 'Payment verified! Your appointment is confirmed.', [
-                    { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
-                ]);
+                setPaymentStatus('success');
             } else {
-                Alert.alert('Pending', 'Payment not yet confirmed. Please try again or contact support.');
+                setPaymentStatus('error');
             }
         } catch (error) {
-            Alert.alert('Verification', 'Please ensure you completed the payment. (Demo: Redirecting to home)', [
-                { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
-            ]);
+            setPaymentStatus('error');
         } finally {
             setLoading(false);
         }
@@ -208,9 +204,10 @@ export default function PaymentScreen({ route, navigation }) {
                     </TouchableOpacity>
 
                     <TouchableOpacity
+                        style={[styles.methodCard, user?.role !== 'barber' && { opacity: 0.5 }]}
                         onPress={() => {
                             if (user?.role === 'barber') handlePayment('cash');
-                            else Alert.alert('Restricted', 'Cash at Studio is only available for Barbers to register payments.');
+                            else Alert.alert('Restricted', 'Cash at Studio is only available for Barbers.');
                         }}
                         disabled={loading || user?.role !== 'barber'}
                     >
@@ -241,6 +238,37 @@ export default function PaymentScreen({ route, navigation }) {
                 </View>
             </ScrollView>
 
+            {/* Performance/Feedback Overlay */}
+            <Modal visible={paymentStatus !== null} transparent animationType="fade">
+                <View style={styles.feedbackOverlay}>
+                    <View style={styles.feedbackCard}>
+                        {paymentStatus === 'success' ? (
+                            <>
+                                <CheckCircle2 color={COLORS.success} size={80} />
+                                <Text style={styles.feedbackTitle}>Payment Successful!</Text>
+                                <Text style={styles.feedbackSub}>Your appointment has been confirmed.</Text>
+                            </>
+                        ) : (
+                            <>
+                                <XCircle color={COLORS.error || '#F44336'} size={80} />
+                                <Text style={[styles.feedbackTitle, { color: '#F44336' }]}>Payment Failed</Text>
+                                <Text style={styles.feedbackSub}>Something went wrong. Please try again.</Text>
+                            </>
+                        )}
+                        <TouchableOpacity
+                            style={[styles.feedbackBtn, { backgroundColor: paymentStatus === 'success' ? COLORS.primary : '#333' }]}
+                            onPress={() => {
+                                setPaymentStatus(null);
+                                if (paymentStatus === 'success') navigation.navigate('MainTabs');
+                            }}
+                        >
+                            <Text style={styles.feedbackBtnText}>
+                                {paymentStatus === 'success' ? 'Back to Dashboard' : 'Try Again'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
             {/* True In-App Checkout Overlay */}
             <Modal
                 visible={showWebView}
@@ -349,6 +377,61 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         fontSize: 12,
         fontWeight: '600',
+    },
+    trustFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        marginTop: 32,
+        marginBottom: 20,
+    },
+    trustItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    trustText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '500' },
+    feedbackOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24
+    },
+    feedbackCard: {
+        backgroundColor: COLORS.card,
+        borderRadius: 30,
+        padding: 40,
+        width: '100%',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#333'
+    },
+    feedbackTitle: {
+        color: COLORS.success,
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginTop: 20,
+        textAlign: 'center'
+    },
+    feedbackSub: {
+        color: COLORS.textSecondary,
+        fontSize: 16,
+        textAlign: 'center',
+        marginTop: 10,
+        marginBottom: 30
+    },
+    feedbackBtn: {
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        borderRadius: 16,
+        width: '100%',
+        alignItems: 'center'
+    },
+    feedbackBtnText: {
+        color: COLORS.background,
+        fontSize: 16,
+        fontWeight: 'bold'
     },
     divider: {
         height: 1,

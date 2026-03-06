@@ -205,8 +205,16 @@ export default function AdminDashboard({ navigation }) {
                             </LinearGradient>
 
                             <LinearGradient colors={['#1a1a1a', '#0f0f0f']} style={styles.statBox}>
+                                <View style={[styles.statIcon, { backgroundColor: '#9C27B020' }]}>
+                                    <TrendingUp color="#9C27B0" size={20} />
+                                </View>
+                                <Text style={styles.statVal}>${stats.monthlyRevenue.toLocaleString()}</Text>
+                                <Text style={styles.statLab}>This Month</Text>
+                            </LinearGradient>
+
+                            <LinearGradient colors={['#1a1a1a', '#0f0f0f']} style={styles.statBox}>
                                 <View style={[styles.statIcon, { backgroundColor: '#2196F320' }]}>
-                                    <TrendingUp color="#2196F3" size={20} />
+                                    <BarChart3 color="#2196F3" size={20} />
                                 </View>
                                 <Text style={styles.statVal}>{((stats.completed / (stats.totalAppointments || 1)) * 100).toFixed(0)}%</Text>
                                 <Text style={styles.statLab}>Success Rate</Text>
@@ -216,7 +224,7 @@ export default function AdminDashboard({ navigation }) {
                                 <View style={[styles.statIcon, { backgroundColor: '#FF980020' }]}>
                                     <Users color="#FF9800" size={20} />
                                 </View>
-                                <Text style={styles.statVal}>${stats.averageTicketSize.toFixed(0)}</Text>
+                                <Text style={styles.statVal}>${(stats.averageTicketSize || 0).toFixed(0)}</Text>
                                 <Text style={styles.statLab}>Avg Ticket</Text>
                             </LinearGradient>
                         </ScrollView>

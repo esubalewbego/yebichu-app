@@ -7,7 +7,7 @@ import { COLORS } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { getBarberAppointments, updateAppointmentStatus as updateStatus } from '../services/api';
 
-export default function BarberDashboard() {
+export default function BarberDashboard({ navigation }) {
     const { user, logout } = useAuth();
     const insets = useSafeAreaInsets();
     const [appointments, setAppointments] = useState([]);
