@@ -50,16 +50,22 @@ const getConversations = async (req, res) => {
         const conversations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Manual sorting to avoid composite index requirements
+        // Robust to both ISO strings and Firestore Timestamps
         conversations.sort((a, b) => {
-            const timeA = new Date(a.lastUpdate || 0).getTime();
-            const timeB = new Date(b.lastUpdate || 0).getTime();
-            return timeB - timeA;
+            const getMillis = (val) => {
+                if (!val) return 0;
+                if (typeof val.toMillis === 'function') return val.toMillis();
+                if (val._seconds) return val._seconds * 1000; // Handing plain objects if they occur
+                const d = new Date(val);
+                return isNaN(d.getTime()) ? 0 : d.getTime();
+            };
+            return getMillis(b.lastUpdate) - getMillis(a.lastUpdate);
         });
 
         res.status(200).json(conversations);
     } catch (error) {
-        console.error('getConversations Error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('getConversations Error Details:', error);
+        res.status(500).json({ error: 'Failed to fetch conversations', details: error.message });
     }
 };
 

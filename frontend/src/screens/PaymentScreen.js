@@ -277,7 +277,7 @@ export default function PaymentScreen({ route, navigation }) {
             >
                 <View style={[styles.webviewHeader, { paddingTop: insets.top }]}>
                     <TouchableOpacity onPress={closeWebView} style={styles.webviewCloseBtn}>
-                        <X color={COLORS.text} size={24} />
+                        <XCircle color={COLORS.text} size={24} />
                     </TouchableOpacity>
                     <View style={styles.secureBadge}>
                         <Lock color={COLORS.success} size={14} />
