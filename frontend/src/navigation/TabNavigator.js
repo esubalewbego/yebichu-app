@@ -11,7 +11,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import ChatListScreen from '../screens/ChatListScreen';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
-import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase, User, Users, MessageSquare } from 'lucide-native';
+import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase, User, Users, MessageSquare } from 'lucide-react-native';
 import { View, ActivityIndicator } from 'react-native';
 
 const Tab = createBottomTabNavigator();
