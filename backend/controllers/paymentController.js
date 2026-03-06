@@ -2,7 +2,7 @@ const axios = require('axios');
 
 const initializePayment = async (req, res) => {
   try {
-    const { amount, currency, email, first_name, last_name, tx_ref, callback_url, return_url } = req.body;
+    const { amount, currency, email, first_name, last_name, phone_number, tx_ref, callback_url, return_url } = req.body;
 
     const response = await axios.post(
       'https://api.chapa.co/v1/transaction/initialize',
@@ -12,13 +12,12 @@ const initializePayment = async (req, res) => {
         email,
         first_name,
         last_name,
+        phone_number,
         tx_ref,
         callback_url,
         return_url,
-        customization: {
-          title: 'Barber Shop Appointment',
-          description: 'Payment for grooming services',
-        },
+        "customization[title]": "Yebichu Booking",
+        "customization[description]": "Payment for grooming services",
       },
       {
         headers: {

@@ -21,9 +21,10 @@ export default function PaymentScreen({ route, navigation }) {
             const paymentData = {
                 amount: item.price,
                 currency: 'ETB',
-                email: user?.email || 'customer@test.com',
-                first_name: user?.displayName?.split(' ')[0] || 'Customer',
-                last_name: user?.displayName?.split(' ')[1] || 'User',
+                email: user?.email || 'customer@gmail.com',
+                first_name: user?.firstName || user?.displayName?.split(' ')[0] || 'Customer',
+                last_name: user?.lastName || user?.displayName?.split(' ')[1] || 'User',
+                phone_number: user?.phoneNumber || '0912345678',
                 tx_ref: txRef,
                 callback_url: 'https://webhook.site/placeholder', // Backend webhook
                 return_url: 'barbershop://payment-complete', // Deep link back to the app
