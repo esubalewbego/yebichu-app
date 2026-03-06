@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { CreditCard, ChevronLeft, ShieldCheck, CheckCircle2, Lock, Smartphone } from 'lucide-react-native';
-import * as WebBrowser from 'expo-web-browser';
+import { CreditCard, ChevronLeft, ShieldCheck, CheckCircle2, Lock, Smartphone, X } from 'lucide-react-native';
+import { WebView } from 'react-native-webview';
 import CustomButton from '../components/Button';
 import { initializePayment, verifyPayment, createAppointment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,9 @@ export default function PaymentScreen({ route, navigation }) {
     const { item, date, time, barberId } = route.params;
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState(false);
+    const [checkoutUrl, setCheckoutUrl] = useState(null);
+    const [showWebView, setShowWebView] = useState(false);
+    const [currentTxRef, setCurrentTxRef] = useState(null);
     const { user } = useAuth();
 
     const handlePayment = async (method) => {
@@ -66,21 +69,10 @@ export default function PaymentScreen({ route, navigation }) {
             const { data } = await initializePayment(paymentData);
 
             if (data.status === 'success' && data.data.checkout_url) {
-                // Open Chapa checkout page inside the app overlay
-                await WebBrowser.openBrowserAsync(data.data.checkout_url);
-
-                // When the modal is closed natively, verify the payment status
-                Alert.alert(
-                    'Verification',
-                    'Did you complete the payment?',
-                    [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                            text: 'Yes, Verify',
-                            onPress: () => verifyAndConfirm(txRef)
-                        }
-                    ]
-                );
+                // Open Chapa checkout page inside a true in-app WebView
+                setCurrentTxRef(txRef);
+                setCheckoutUrl(data.data.checkout_url);
+                setShowWebView(true);
             } else {
                 throw new Error('Failed to initialize payment');
             }
@@ -89,9 +81,34 @@ export default function PaymentScreen({ route, navigation }) {
             console.error('Payment Error Details:', error.response?.data || error.message);
             const errDetails = error.response?.data?.error || error.response?.data || error.message;
             Alert.alert('Checkout Error', `Failed to open Chapa. Details: ${JSON.stringify(errDetails)}`);
-        } finally {
             setLoading(false);
         }
+    };
+
+    const handleWebViewNavigation = (navState) => {
+        // Stop loading spinner once the webview url starts loading
+        if (loading) setLoading(false);
+
+        // Chapa redirects to your return_url when payment completes successfully
+        if (navState.url.includes('google.com')) {
+            setShowWebView(false);
+            verifyAndConfirm(currentTxRef);
+        }
+    };
+
+    const closeWebView = () => {
+        setShowWebView(false);
+        Alert.alert(
+            'Payment Cancelled',
+            'Did you complete the payment before closing?',
+            [
+                { text: 'No, Cancel', style: 'cancel' },
+                {
+                    text: 'Yes, Verify It',
+                    onPress: () => verifyAndConfirm(currentTxRef)
+                }
+            ]
+        );
     };
 
     const verifyAndConfirm = async (txRef) => {
@@ -224,6 +241,37 @@ export default function PaymentScreen({ route, navigation }) {
                     </View>
                 </View>
             </ScrollView>
+
+            {/* True In-App Checkout Overlay */}
+            <Modal
+                visible={showWebView}
+                animationType="slide"
+                onRequestClose={closeWebView}
+            >
+                <View style={[styles.webviewHeader, { paddingTop: insets.top }]}>
+                    <TouchableOpacity onPress={closeWebView} style={styles.webviewCloseBtn}>
+                        <X color={COLORS.text} size={24} />
+                    </TouchableOpacity>
+                    <View style={styles.secureBadge}>
+                        <Lock color={COLORS.success} size={14} />
+                        <Text style={styles.secureBadgeText}>SECURE CHAPA CHECKOUT</Text>
+                    </View>
+                    <View style={{ width: 44 }} />
+                </View>
+                {checkoutUrl && (
+                    <WebView
+                        source={{ uri: checkoutUrl }}
+                        style={{ flex: 1, backgroundColor: COLORS.background }}
+                        onNavigationStateChange={handleWebViewNavigation}
+                        startInLoadingState={true}
+                        renderLoading={() => (
+                            <View style={styles.webviewLoader}>
+                                <ActivityIndicator size="large" color={COLORS.primary} />
+                            </View>
+                        )}
+                    />
+                )}
+            </Modal>
         </View>
     );
 }
@@ -371,5 +419,33 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    webviewHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: COLORS.card,
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#333',
+    },
+    webviewCloseBtn: {
+        width: 44,
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#222',
+        borderRadius: 12,
+    },
+    webviewLoader: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.background,
     },
 });
