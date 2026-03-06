@@ -10,11 +10,36 @@ import { initializePayment, verifyPayment, createAppointment } from '../services
 import { useAuth } from '../context/AuthContext';
 
 export default function PaymentScreen({ route, navigation }) {
-    const { item, date, time } = route.params;
+    const { item, date, time, barberId } = route.params;
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('chapa');
+    const { user } = useAuth();
 
     const handlePayment = async () => {
+        if (paymentMethod === 'cash') {
+            setLoading(true);
+            try {
+                await createAppointment({
+                    userId: user?.uid || user?.id || 'anonymous',
+                    barberId,
+                    item,
+                    date,
+                    time,
+                    status: 'paid',
+                    tx_ref: `cash-${Date.now()}`
+                });
+                Alert.alert('Success', 'Appointment confirmed with Cash payment.', [
+                    { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
+                ]);
+            } catch (error) {
+                Alert.alert('Error', 'Failed to confirm appointment.');
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
         setLoading(true);
         try {
             const txRef = `tx-${Date.now()}`;
@@ -69,6 +94,7 @@ export default function PaymentScreen({ route, navigation }) {
             if (data.status === 'success') {
                 await createAppointment({
                     userId: user?.uid || user?.id || 'anonymous',
+                    barberId,
                     item,
                     date,
                     time,
@@ -90,8 +116,6 @@ export default function PaymentScreen({ route, navigation }) {
             setLoading(false);
         }
     };
-
-    const { user } = useAuth();
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -141,7 +165,10 @@ export default function PaymentScreen({ route, navigation }) {
                 <View style={styles.methodSection}>
                     <Text style={styles.sectionTitle}>Payment Method</Text>
 
-                    <TouchableOpacity style={[styles.methodCard, styles.activeMethod]}>
+                    <TouchableOpacity
+                        style={[styles.methodCard, paymentMethod === 'chapa' && styles.activeMethod]}
+                        onPress={() => setPaymentMethod('chapa')}
+                    >
                         <View style={styles.methodIconBox}>
                             <CreditCard color={COLORS.primary} size={24} />
                         </View>
@@ -149,20 +176,29 @@ export default function PaymentScreen({ route, navigation }) {
                             <Text style={styles.methodName}>Chapa Payment</Text>
                             <Text style={styles.methodSub}>Telebirr, Cards, Mobile Banking</Text>
                         </View>
-                        <View style={styles.radioActive}>
-                            <View style={styles.radioInner} />
+                        <View style={paymentMethod === 'chapa' ? styles.radioActive : styles.radioInactive}>
+                            {paymentMethod === 'chapa' && <View style={styles.radioInner} />}
                         </View>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.methodCard} disabled>
+                    <TouchableOpacity
+                        style={[styles.methodCard, paymentMethod === 'cash' && styles.activeMethod]}
+                        onPress={() => {
+                            if (user?.role === 'admin') setPaymentMethod('cash');
+                            else Alert.alert('Restricted', 'Cash at Studio is only available for Admin bookings.');
+                        }}
+                        disabled={user?.role !== 'admin'}
+                    >
                         <View style={styles.methodIconBox}>
-                            <Smartphone color={COLORS.textSecondary} size={24} />
+                            <Smartphone color={user?.role === 'admin' ? COLORS.primary : COLORS.textSecondary} size={24} />
                         </View>
                         <View style={styles.methodInfo}>
-                            <Text style={[styles.methodName, { color: COLORS.textSecondary }]}>Cash at Studio</Text>
-                            <Text style={styles.methodSub}>Unavailable for packages</Text>
+                            <Text style={[styles.methodName, user?.role !== 'admin' && { color: COLORS.textSecondary }]}>Cash at Studio</Text>
+                            <Text style={styles.methodSub}>{user?.role === 'admin' ? 'Pay directly at the studio' : 'Admin only feature'}</Text>
                         </View>
-                        <View style={styles.radioInactive} />
+                        <View style={paymentMethod === 'cash' ? styles.radioActive : styles.radioInactive}>
+                            {paymentMethod === 'cash' && <View style={styles.radioInner} />}
+                        </View>
                     </TouchableOpacity>
                 </View>
 

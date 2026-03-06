@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { Calendar, Clock, ChevronLeft, Star, MapPin, Check } from 'lucide-react-native';
+import { Calendar, Clock, ChevronLeft, Star, MapPin, Check, User } from 'lucide-react-native';
+import { getBarbersList } from '../services/api';
 import CustomButton from '../components/Button';
 
 export default function BookingScreen({ route, navigation }) {
@@ -11,11 +12,35 @@ export default function BookingScreen({ route, navigation }) {
     const insets = useSafeAreaInsets();
     const [selectedDate, setSelectedDate] = useState('2026-03-10');
     const [selectedTime, setSelectedTime] = useState('10:00 AM');
+    const [barbers, setBarbers] = useState([]);
+    const [selectedBarber, setSelectedBarber] = useState(null);
 
     const times = ['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'];
 
+    useEffect(() => {
+        const fetchBarbers = async () => {
+            try {
+                const { data } = await getBarbersList();
+                setBarbers(data);
+                if (data.length > 0) setSelectedBarber(data[0].id);
+            } catch (error) {
+                console.error('Failed to fetch barbers:', error);
+            }
+        };
+        fetchBarbers();
+    }, []);
+
     const handleBooking = () => {
-        navigation.navigate('Payment', { item, date: selectedDate, time: selectedTime });
+        if (!selectedBarber && barbers.length > 0) {
+            Alert.alert('Selection Required', 'Please select a preferred barber.');
+            return;
+        }
+        navigation.navigate('Payment', {
+            item,
+            date: selectedDate,
+            time: selectedTime,
+            barberId: selectedBarber
+        });
     };
 
     return (
@@ -94,6 +119,34 @@ export default function BookingScreen({ route, navigation }) {
                         })}
                     </View>
                 </View>
+
+                {barbers.length > 0 && (
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Select Barber</Text>
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.barberList}>
+                            {barbers.map((barber) => {
+                                const isSelected = selectedBarber === barber.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={barber.id}
+                                        style={[styles.barberCard, isSelected && styles.selectedBarberCard]}
+                                        onPress={() => setSelectedBarber(barber.id)}
+                                    >
+                                        <View style={styles.barberAvatarBox}>
+                                            <User color={isSelected ? COLORS.background : COLORS.text} size={24} />
+                                        </View>
+                                        <Text style={[styles.barberName, isSelected && styles.selectedText]} numberOfLines={1}>
+                                            {barber.firstName || barber.email.split('@')[0]}
+                                        </Text>
+                                        {isSelected && <View style={styles.activeDot} />}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+                )}
 
                 <View style={styles.locationSection}>
                     <Text style={styles.sectionTitle}>Location</Text>
@@ -336,5 +389,40 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 24,
         fontWeight: 'bold',
+    },
+    barberList: {
+        paddingLeft: 24,
+        paddingRight: 10,
+        gap: 12,
+    },
+    barberCard: {
+        backgroundColor: COLORS.card,
+        width: 80,
+        height: 100,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#333',
+        padding: 8,
+    },
+    selectedBarberCard: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    barberAvatarBox: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    barberName: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+        fontWeight: '600',
+        textAlign: 'center',
     },
 });
