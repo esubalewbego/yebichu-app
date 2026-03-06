@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { CreditCard, ChevronLeft, ShieldCheck, CheckCircle2, Lock, Smartphone } from 'lucide-react-native';
+import * as WebBrowser from 'expo-web-browser';
 import CustomButton from '../components/Button';
 import { initializePayment, verifyPayment, createAppointment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -33,24 +34,21 @@ export default function PaymentScreen({ route, navigation }) {
             const { data } = await initializePayment(paymentData);
 
             if (data.status === 'success' && data.data.checkout_url) {
-                // Open Chapa checkout page
-                const supported = await Linking.canOpenURL(data.data.checkout_url);
-                if (supported) {
-                    await Linking.openURL(data.data.checkout_url);
+                // Open Chapa checkout page inside the app overlay
+                await WebBrowser.openBrowserAsync(data.data.checkout_url);
 
-                    Alert.alert(
-                        'Payment Initiated',
-                        'Please complete the payment in your browser. After that, click "Verify" to confirm your appointment.',
-                        [
-                            {
-                                text: 'Verify Payment',
-                                onPress: () => verifyAndConfirm(txRef)
-                            }
-                        ]
-                    );
-                } else {
-                    Alert.alert('Error', 'Cannot open payment link.');
-                }
+                // When the modal is closed natively, verify the payment status
+                Alert.alert(
+                    'Verification',
+                    'Did you complete the payment?',
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                            text: 'Yes, Verify',
+                            onPress: () => verifyAndConfirm(txRef)
+                        }
+                    ]
+                );
             } else {
                 throw new Error('Failed to initialize payment');
             }
