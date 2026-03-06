@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
-import { Scissors, Clock, CheckCircle, MessageSquare } from 'lucide-react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, ScrollView } from 'react-native';
+import { Scissors, Clock, CheckCircle, MessageSquare, TrendingUp, DollarSign, Award } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
@@ -12,8 +12,9 @@ export default function BarberDashboard({ navigation }) {
     const insets = useSafeAreaInsets();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('jobs'); // 'jobs' | 'performance'
 
-    if (user?.role !== 'barber') {
+    if (user?.role?.toLowerCase() !== 'barber') {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                 <Text style={{ color: COLORS.text, fontSize: 18 }}>Access Denied</Text>
@@ -28,14 +29,31 @@ export default function BarberDashboard({ navigation }) {
     const fetchSchedule = async () => {
         setLoading(true);
         try {
-            const { data } = await getBarberAppointments(user?.uid || user?.id);
-            setAppointments(data);
+            const barberId = user?.uid || user?.id;
+            console.log('Fetching schedule for barber:', barberId);
+            const { data } = await getBarberAppointments(barberId);
+            console.log('Appointments fetched:', data?.length);
+            setAppointments(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch Barber Schedule:', error);
             setAppointments([]);
         } finally {
             setLoading(false);
         }
+    };
+
+    const stats = {
+        pending: appointments.filter(a => {
+            const s = a.status?.toLowerCase();
+            return s === 'pending' || s === 'paid' || s === 'assigned';
+        }).length,
+        completed: appointments.filter(a => a.status?.toLowerCase() === 'completed').length,
+        earnings: appointments
+            .filter(a => {
+                const s = a.status?.toLowerCase();
+                return s === 'completed' || s === 'paid';
+            })
+            .reduce((sum, a) => sum + (Number(a.item?.price || a.price) || 0), 0)
     };
 
     const markAsCompleted = async (id) => {
@@ -47,6 +65,49 @@ export default function BarberDashboard({ navigation }) {
             Alert.alert('Error', 'Failed to update appointment status');
         }
     };
+
+    const renderPerformance = () => (
+        <ScrollView style={styles.perfScroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.perfCard}>
+                <Text style={styles.perfTitle}>Total Earnings</Text>
+                <Text style={styles.perfValue}>${stats.earnings.toLocaleString()}</Text>
+                <View style={styles.perfDivider} />
+                <View style={styles.perfRow}>
+                    <View>
+                        <Text style={styles.perfSub}>Jobs Done</Text>
+                        <Text style={styles.perfSubVal}>{stats.completed}</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.perfSub}>Success Rate</Text>
+                        <Text style={styles.perfSubVal}>
+                            {appointments.length > 0
+                                ? ((stats.completed / appointments.length) * 100).toFixed(0)
+                                : 0}%
+                        </Text>
+                    </View>
+                </View>
+            </View>
+
+            <View style={styles.metricGrid}>
+                <View style={styles.metricBox}>
+                    <Text style={styles.metricLab}>Today's Target</Text>
+                    <Text style={styles.metricVal}>{stats.completed}/10</Text>
+                    <View style={styles.progressBg}>
+                        <View style={[styles.progressFill, { width: `${Math.min(stats.completed * 10, 100)}%` }]} />
+                    </View>
+                </View>
+                <View style={styles.metricBox}>
+                    <Text style={styles.metricLab}>Avg Rating</Text>
+                    <Text style={styles.metricVal}>4.9/5.0</Text>
+                    <View style={styles.starRow}>
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <Text key={i} style={{ color: COLORS.primary, fontSize: 12 }}>★</Text>
+                        ))}
+                    </View>
+                </View>
+            </View>
+        </ScrollView>
+    );
 
     const renderItem = ({ item }) => (
         <View style={styles.card}>
@@ -72,7 +133,7 @@ export default function BarberDashboard({ navigation }) {
                 </View>
             </View>
 
-            {item.status === 'pending' && (
+            {(item.status?.toLowerCase() === 'pending' || item.status?.toLowerCase() === 'paid' || item.status?.toLowerCase() === 'assigned') && (
                 <TouchableOpacity
                     style={styles.completeBtn}
                     onPress={() => markAsCompleted(item.id)}
@@ -93,7 +154,7 @@ export default function BarberDashboard({ navigation }) {
                 <View style={styles.header}>
                     <View>
                         <Text style={styles.headerTitle}>Barber Portal</Text>
-                        <Text style={styles.headerSub}>Today's Schedule</Text>
+                        <Text style={styles.headerSub}>Management Console</Text>
                     </View>
                     <View style={styles.headerRight}>
                         <TouchableOpacity
@@ -108,34 +169,45 @@ export default function BarberDashboard({ navigation }) {
                     </View>
                 </View>
 
-                <View style={styles.statsRow}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>{appointments.filter(a => a.status === 'pending').length}</Text>
-                        <Text style={styles.statLabel}>Pending</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>{appointments.filter(a => a.status === 'completed').length}</Text>
-                        <Text style={styles.statLabel}>Completed</Text>
-                    </View>
+                {/* Tab Switcher */}
+                <View style={styles.tabBar}>
+                    <TouchableOpacity
+                        onPress={() => setActiveTab('jobs')}
+                        style={[styles.tab, activeTab === 'jobs' && styles.activeTab]}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'jobs' && styles.activeTabText]}>Active Jobs</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setActiveTab('performance')}
+                        style={[styles.tab, activeTab === 'performance' && styles.activeTab]}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'performance' && styles.activeTabText]}>Performance</Text>
+                    </TouchableOpacity>
                 </View>
             </LinearGradient>
 
-            <FlatList
-                data={appointments}
-                keyExtractor={item => item.id}
-                renderItem={renderItem}
-                contentContainerStyle={styles.list}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={fetchSchedule} tintColor={COLORS.primary} />
-                }
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Scissors color={COLORS.textSecondary} size={48} style={{ opacity: 0.3 }} />
-                        <Text style={styles.emptyText}>No appointments scheduled today.</Text>
-                    </View>
-                }
-            />
+            {loading ? (
+                <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />
+            ) : activeTab === 'jobs' ? (
+                <FlatList
+                    data={appointments}
+                    keyExtractor={item => item.id}
+                    renderItem={renderItem}
+                    contentContainerStyle={styles.list}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl refreshing={loading} onRefresh={fetchSchedule} tintColor={COLORS.primary} />
+                    }
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Scissors color={COLORS.textSecondary} size={48} style={{ opacity: 0.3 }} />
+                            <Text style={styles.emptyText}>No appointments scheduled today.</Text>
+                        </View>
+                    }
+                />
+            ) : (
+                renderPerformance()
+            )}
         </View>
     );
 }
@@ -185,30 +257,111 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: 'bold',
     },
-    statsRow: {
+    tabBar: {
         flexDirection: 'row',
         paddingHorizontal: 24,
-        gap: 16,
-        marginTop: 10,
+        marginTop: 20,
+        gap: 12,
     },
-    statCard: {
-        flex: 1,
+    tab: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 12,
         backgroundColor: COLORS.card,
-        padding: 16,
-        borderRadius: 16,
         borderWidth: 1,
         borderColor: '#333',
-        alignItems: 'center',
     },
-    statValue: {
-        color: COLORS.primary,
-        fontSize: 24,
+    activeTab: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    tabText: {
+        color: COLORS.textSecondary,
         fontWeight: 'bold',
+        fontSize: 14,
     },
-    statLabel: {
+    activeTabText: {
+        color: COLORS.background,
+    },
+    perfScroll: {
+        padding: 24,
+    },
+    perfCard: {
+        backgroundColor: COLORS.card,
+        padding: 30,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: '#333',
+        marginBottom: 20,
+    },
+    perfTitle: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 1.5,
+    },
+    perfValue: {
+        color: COLORS.text,
+        fontSize: 48,
+        fontWeight: 'bold',
+        marginVertical: 10,
+    },
+    perfDivider: {
+        height: 1,
+        backgroundColor: '#333',
+        marginVertical: 20,
+    },
+    perfRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    perfSub: {
         color: COLORS.textSecondary,
         fontSize: 12,
-        marginTop: 4,
+        marginBottom: 4,
+    },
+    perfSubVal: {
+        color: COLORS.primary,
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    metricGrid: {
+        flexDirection: 'row',
+        gap: 16,
+    },
+    metricBox: {
+        flex: 1,
+        backgroundColor: COLORS.card,
+        padding: 20,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    metricLab: {
+        color: COLORS.textSecondary,
+        fontSize: 12,
+        marginBottom: 8,
+    },
+    metricVal: {
+        color: COLORS.text,
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 12,
+    },
+    progressBg: {
+        height: 4,
+        backgroundColor: '#333',
+        borderRadius: 2,
+    },
+    progressFill: {
+        height: '100%',
+        backgroundColor: COLORS.primary,
+        borderRadius: 2,
+    },
+    starRow: {
+        flexDirection: 'row',
+        gap: 4,
     },
     list: {
         padding: 24,
