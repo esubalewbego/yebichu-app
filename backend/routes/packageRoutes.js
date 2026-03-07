@@ -1,10 +1,14 @@
+const express = require('express');
 const {
     getPackages,
     getStyles,
     createPackage,
     updatePackage,
     deletePackage,
-    rateStyle
+    rateStyle,
+    createStyle,
+    updateStyle,
+    deleteStyle
 } = require('../controllers/packageController');
 const {
     getCategories,

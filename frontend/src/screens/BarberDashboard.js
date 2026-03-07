@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
-import { getBarberAppointments, updateAppointmentStatus as updateStatus, recordCashPayment as apiRecordCash } from '../services/api';
+import { getBarberAppointments, updateAppointmentStatus as updateStatus, recordCashPayment as apiRecordCash, getAdminInfo } from '../services/api';
 
 export default function BarberDashboard({ navigation }) {
     // ... inside the component
@@ -23,6 +23,7 @@ export default function BarberDashboard({ navigation }) {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('jobs'); // 'jobs' | 'performance'
+    const [adminUid, setAdminUid] = useState(null);
 
     if (user?.role?.toLowerCase() !== 'barber') {
         return (
@@ -34,7 +35,17 @@ export default function BarberDashboard({ navigation }) {
 
     useEffect(() => {
         fetchSchedule();
+        loadAdminInfo();
     }, []);
+
+    const loadAdminInfo = async () => {
+        try {
+            const { data } = await getAdminInfo();
+            setAdminUid(data.uid);
+        } catch (error) {
+            console.error('Failed to load admin info:', error);
+        }
+    };
 
     const fetchSchedule = async () => {
         setLoading(true);
@@ -177,7 +188,7 @@ export default function BarberDashboard({ navigation }) {
                     </View>
                     <View style={styles.headerRight}>
                         <TouchableOpacity
-                            onPress={() => navigation.navigate('Chat', { receiverId: 'admin_uid_fallback' })}
+                            onPress={() => navigation.navigate('Chat', { receiverId: adminUid, userName: 'Admin Support' })}
                             style={[styles.logoutBtn, { marginRight: 10, borderColor: COLORS.primary + '40' }]}
                         >
                             <MessageSquare color={COLORS.primary} size={18} />

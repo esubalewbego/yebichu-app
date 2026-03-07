@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ScrollView, ActivityIndicator, RefreshControl, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
-import { getPackages, getStyles, rateStyle, getAdminInfo, toggleWishlist as apiToggleWishlist } from '../services/api';
+import { getPackages, getStyles, rateStyle, getAdminInfo, getCategories, toggleWishlist as apiToggleWishlist } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart, Filter, MessageSquare } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +21,7 @@ export default function HomeScreen({ navigation }) {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [activeTab, setActiveTab] = useState('all'); // 'all' or 'favorites'
+    const [adminUid, setAdminUid] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -50,7 +51,6 @@ export default function HomeScreen({ navigation }) {
 
     const fetchCategories = async () => {
         try {
-            const { getCategories } = require('../services/api');
             const { data } = await getCategories();
             setCategories([{ id: null, name: 'All' }, ...data]);
         } catch (error) {

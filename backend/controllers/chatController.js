@@ -17,9 +17,16 @@ const sendMessage = async (req, res) => {
             read: false
         };
 
-        // Create a unique conversation ID (alphabetical order of UIDs)
         const participants = [senderId, receiverId].sort();
         const conversationId = participants.join('_');
+
+        // Restriction: Non-admins can only send messages to admins
+        if (req.user.role !== 'admin') {
+            const receiverDoc = await db.collection('users').doc(receiverId).get();
+            if (!receiverDoc.exists || receiverDoc.data().role !== 'admin') {
+                return res.status(403).json({ error: 'You can only chat with administrator support.' });
+            }
+        }
 
         await db.collection('conversations')
             .doc(conversationId)
@@ -50,7 +57,7 @@ const getConversations = async (req, res) => {
         const conversations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Resolve participant identities
-        const conversationWithDetails = await Promise.all(conversations.map(async (convo) => {
+        let conversationWithDetails = await Promise.all(conversations.map(async (convo) => {
             const otherUid = convo.participants.find(p => p !== uid);
             if (!otherUid) return { ...convo, otherParticipant: { name: 'Chat', email: '' } };
 
@@ -72,6 +79,11 @@ const getConversations = async (req, res) => {
             }
             return { ...convo, otherParticipant: { name: 'User', email: otherUid } };
         }));
+
+        // Restriction: Non-admins can only see conversations with an admin
+        if (req.user.role !== 'admin') {
+            conversationWithDetails = conversationWithDetails.filter(c => c.otherParticipant && c.otherParticipant.role === 'admin');
+        }
 
         // Manual sorting to avoid composite index requirements
         conversationWithDetails.sort((a, b) => {

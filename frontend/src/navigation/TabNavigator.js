@@ -70,13 +70,6 @@ export default function TabNavigator() {
                         }}
                     />
                     <Tab.Screen
-                        name="Messages"
-                        component={ChatListScreen}
-                        options={{
-                            tabBarIcon: ({ color }) => <MessageSquare color={color} size={24} />,
-                        }}
-                    />
-                    <Tab.Screen
                         name="Profile"
                         component={ProfileScreen}
                         options={{
