@@ -10,9 +10,8 @@ import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart,
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen({ navigation }) {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const insets = useSafeAreaInsets();
-    const [packages, setPackages] = useState([]);
     const [stylesData, setHairStyles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [ratingModalVisible, setRatingModalVisible] = useState(false);
@@ -62,12 +61,10 @@ export default function HomeScreen({ navigation }) {
 
     const fetchData = async () => {
         try {
-            const [pkgs, sts] = await Promise.all([getPackages(), getStyles()]);
-            setPackages(pkgs.data);
-            setHairStyles(sts.data);
+            const { data } = await getStyles();
+            setHairStyles(data);
         } catch (error) {
             console.error('Failed to fetch Home Data:', error);
-            setPackages([]);
             setHairStyles([]);
         } finally {
             setLoading(false);
@@ -99,58 +96,27 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
-    const renderPackage = ({ item }) => (
-        <TouchableOpacity
-            style={styles.packageCard}
-            onPress={() => navigation.navigate('Booking', { item, isPackage: true })}
-            activeOpacity={0.9}
-        >
-            <Image
-                source={{ uri: item.image || 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=600' }}
-                style={styles.packageImage}
-            />
-            <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.95)']}
-                style={styles.packageGradient}
-            >
-                <View style={styles.packageContent}>
-                    <View style={styles.packageTag}>
-                        <Text style={styles.packageTagText}>POPULAR</Text>
-                    </View>
-                    <Text style={styles.packageTitle}>{item.name}</Text>
-                    <View style={styles.packageFooter}>
-                        <Text style={styles.packagePrice}>${item.price}</Text>
-                        <View style={styles.packageDot} />
-                        <Text style={styles.packageDuration}>{item.duration || '60 min'}</Text>
-                    </View>
-                </View>
-            </LinearGradient>
-            <TouchableOpacity
-                style={styles.wishlistBtn}
-                onPress={() => handleWishlistToggle(item.id)}
-            >
-                <Heart
-                    color={wishlist.includes(item.id) ? COLORS.primary : "#fff"}
-                    fill={wishlist.includes(item.id) ? COLORS.primary : "transparent"}
-                    size={18}
-                />
-            </TouchableOpacity>
-        </TouchableOpacity>
-    );
-
     const renderSwappingStyle = ({ item }) => (
         <TouchableOpacity
             style={styles.swapCard}
             onPress={() => navigation.navigate('Booking', { item, isPackage: false })}
             activeOpacity={0.9}
         >
-            <ImageBackground
-                source={{ uri: item.image || 'https://images.unsplash.com/photo-1621605815841-28565f57fc97?auto=format&fit=crop&q=80&w=600' }}
-                style={styles.swapImage}
-                imageStyle={{ borderRadius: 24 }}
-            >
+            <View style={styles.swapImageBg}>
+                {item.image ? (
+                    <Image
+                        source={{ uri: item.image }}
+                        style={styles.swapImage}
+                        resizeMode="cover"
+                    />
+                ) : (
+                    <View style={styles.placeholderContainer}>
+                        <Scissors color={COLORS.primary} size={48} opacity={0.2} />
+                        <Text style={styles.placeholderText}>Design Preview Coming Soon</Text>
+                    </View>
+                )}
                 <LinearGradient
-                    colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)']}
+                    colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)']}
                     style={styles.swapGradient}
                 >
                     <View style={styles.swapHeader}>
@@ -178,7 +144,7 @@ export default function HomeScreen({ navigation }) {
                                     {`${item.avgRating?.toFixed(1) || '0.0'} (${item.ratingCount || 0})`}
                                 </Text>
                                 <View style={styles.rateNowBadge}>
-                                    <Text style={styles.rateNowText}>Rate</Text>
+                                    <Text style={styles.rateNowText}>Rate Now</Text>
                                 </View>
                             </TouchableOpacity>
                         </View>
@@ -187,41 +153,6 @@ export default function HomeScreen({ navigation }) {
                         </View>
                     </View>
                 </LinearGradient>
-            </ImageBackground>
-        </TouchableOpacity>
-    );
-
-    const renderStyle = ({ item }) => (
-        <TouchableOpacity
-            style={styles.styleCard}
-            onPress={() => navigation.navigate('Booking', { item, isPackage: false })}
-            activeOpacity={0.7}
-        >
-            <Image
-                source={{ uri: item.image || 'https://images.unsplash.com/photo-1621605815841-28565f57fc97?auto=format&fit=crop&q=80&w=200' }}
-                style={styles.styleThumb}
-            />
-            <View style={styles.styleInfo}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Text style={styles.styleName}>{item.name}</Text>
-                    <TouchableOpacity onPress={() => handleWishlistToggle(item.id)} style={{ padding: 4 }}>
-                        <Heart
-                            color={wishlist.includes(item.id) ? COLORS.primary : COLORS.textSecondary}
-                            fill={wishlist.includes(item.id) ? COLORS.primary : "transparent"}
-                            size={16}
-                        />
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity style={styles.styleMeta} onPress={() => handleRatePress(item)}>
-                    <Star color="#FFD700" size={12} fill="#FFD700" />
-                    <Text style={styles.styleRating}>
-                        {`${item.avgRating?.toFixed(1) || '0.0'} (${item.ratingCount || 0})`}
-                    </Text>
-                </TouchableOpacity>
-                <Text style={styles.stylePrice}>Starting from <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>${item.price}</Text></Text>
-            </View>
-            <View style={styles.styleAction}>
-                <ChevronRight color={COLORS.textSecondary} size={20} />
             </View>
         </TouchableOpacity>
     );
@@ -269,17 +200,6 @@ export default function HomeScreen({ navigation }) {
                     <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={COLORS.primary} />
                 }
             >
-                <View style={styles.statusBanner}>
-                    <View style={styles.locBox}>
-                        <MapPin color={COLORS.primary} size={16} />
-                        <Text style={styles.locText}>Studio Location</Text>
-                    </View>
-                    <View style={styles.divider} />
-                    <View style={styles.statusBox}>
-                        <View style={styles.onlineDot} />
-                        <Text style={styles.statusText}>Studio Open</Text>
-                    </View>
-                </View>
 
                 {loading ? (
                     <View style={styles.loaderBox}>
@@ -319,24 +239,12 @@ export default function HomeScreen({ navigation }) {
                             />
                         </View>
 
-                        <View style={styles.stylesList}>
-                            {stylesData
-                                .filter(item => activeTab === 'all' || wishlist.includes(item.id))
-                                .map(item => (
-                                    <View key={item.id}>
-                                        {renderStyle({ item })}
-                                    </View>
-                                ))}
-                            {activeTab === 'favorites' && stylesData.filter(item => wishlist.includes(item.id)).length === 0 && (
-                                <View style={styles.emptyFavorites}>
-                                    <Heart color={COLORS.textSecondary} size={48} style={{ opacity: 0.2 }} />
-                                    <Text style={styles.emptyFavoritesText}>No favorites yet</Text>
-                                    <TouchableOpacity style={styles.discoverBtn} onPress={() => setActiveTab('all')}>
-                                        <Text style={styles.discoverBtnText}>Discover Styles</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-                        </View>
+                        {stylesData.length === 0 && !loading && (
+                            <View style={styles.emptyContainer}>
+                                <Scissors color={COLORS.textSecondary} size={48} style={{ opacity: 0.2 }} />
+                                <Text style={styles.emptyText}>No styles available right now.</Text>
+                            </View>
+                        )}
 
                     </>
                 )}
