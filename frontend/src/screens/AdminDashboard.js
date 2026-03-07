@@ -254,6 +254,17 @@ export default function AdminDashboard({ navigation }) {
                             <Text style={styles.mgmtCardTitle}>Users</Text>
                             <Text style={styles.mgmtCardSub}>Manage Roles</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.mgmtCard}
+                            onPress={() => navigation.navigate('ChatList')}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: '#9C27B015' }]}>
+                                <MessageSquare color="#9C27B0" size={28} />
+                            </View>
+                            <Text style={styles.mgmtCardTitle}>Messages</Text>
+                            <Text style={styles.mgmtCardSub}>Client Support</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 

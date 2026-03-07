@@ -83,7 +83,7 @@ export default function HomeScreen({ navigation }) {
                 <Text style={styles.styleName}>{item.name}</Text>
                 <View style={styles.styleMeta}>
                     <Star color="#FFD700" size={12} fill="#FFD700" />
-                    <Text style={styles.styleRating}>4.8 (120+)</Text>
+                    <Text style={styles.styleRating}>Top Rated</Text>
                 </View>
                 <Text style={styles.stylePrice}>Starting from <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>${item.price}</Text></Text>
             </View>
@@ -142,7 +142,7 @@ export default function HomeScreen({ navigation }) {
                 <View style={styles.statusBanner}>
                     <View style={styles.locBox}>
                         <MapPin color={COLORS.primary} size={16} />
-                        <Text style={styles.locText}>Addis Ababa, Bole</Text>
+                        <Text style={styles.locText}>Studio Location</Text>
                     </View>
                     <View style={styles.divider} />
                     <View style={styles.statusBox}>
@@ -196,22 +196,6 @@ export default function HomeScreen({ navigation }) {
                             ))}
                         </View>
 
-                        <TouchableOpacity style={styles.promoCard} activeOpacity={0.9}>
-                            <LinearGradient
-                                colors={[COLORS.primary, COLORS.primary + 'AA']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.promoGradient}
-                            >
-                                <View style={styles.promoInfo}>
-                                    <Text style={styles.promoTitle}>Invite a friend</Text>
-                                    <Text style={styles.promoDesc}>Get 20% off your next session</Text>
-                                </View>
-                                <TouchableOpacity style={styles.promoBtn}>
-                                    <Text style={styles.promoBtnText}>Share</Text>
-                                </TouchableOpacity>
-                            </LinearGradient>
-                        </TouchableOpacity>
                     </>
                 )}
             </ScrollView>

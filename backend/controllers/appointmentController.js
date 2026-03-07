@@ -2,7 +2,7 @@ const { db } = require('../config/firebase');
 
 const createAppointment = async (req, res) => {
     try {
-        const { userId, barberId, date, time, packageId, styleId, status, item, price } = req.body;
+        const { userId, barberId, date, time, packageId, styleId, status, item, price, userName, userEmail } = req.body;
 
         const appointment = {
             userId,
@@ -11,7 +11,9 @@ const createAppointment = async (req, res) => {
             time,
             packageId,
             styleId,
-            item: item || null,
+            userName: userName || 'Customer',
+            userEmail: userEmail || '',
+            item: item ? JSON.parse(JSON.stringify(item)) : null, // Sanitize for Firestore
             price: price || item?.price || 0,
             status: status || 'pending',
             createdAt: new Date().toISOString(),
@@ -20,7 +22,11 @@ const createAppointment = async (req, res) => {
         const docRef = await db.collection('appointments').add(appointment);
         res.status(201).json({ id: docRef.id, ...appointment });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('---- CREATE APPOINTMENT ERROR ----');
+        console.error('Body:', req.body);
+        console.error('Error:', error);
+        console.error('----------------------------------');
+        res.status(500).json({ error: 'Failed to create appointment', details: error.message });
     }
 };
 

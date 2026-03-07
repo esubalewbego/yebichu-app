@@ -5,6 +5,7 @@ import { COLORS } from '../theme/colors';
 import { getConversations } from '../services/api';
 import { MessageSquare, ChevronRight, User } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { auth } from '../config/firebase';
 
 export default function ChatListScreen({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -27,18 +28,23 @@ export default function ChatListScreen({ navigation }) {
     };
 
     const renderItem = ({ item }) => {
-        // Find the other participant's ID (not the admin's)
-        // For simplicity in this demo, we'll just show the conversation ID or last message
+        const participant = item.otherParticipant || { name: 'Chat', email: '' };
+
         return (
             <TouchableOpacity
                 style={styles.convoCard}
-                onPress={() => navigation.navigate('Chat', { conversationId: item.id })}
+                onPress={() => navigation.navigate('Chat', {
+                    conversationId: item.id,
+                    receiverId: item.participants.find(p => p !== auth.currentUser?.uid),
+                    userName: participant.name
+                })}
             >
                 <View style={styles.avatar}>
                     <User color={COLORS.primary} size={24} />
                 </View>
                 <View style={styles.convoInfo}>
-                    <Text style={styles.convoTitle}>Customer Support Chat</Text>
+                    <Text style={styles.convoTitle}>{participant.name}</Text>
+                    <Text style={styles.convoEmail} numberOfLines={1}>{participant.email}</Text>
                     <Text style={styles.lastMsg} numberOfLines={1}>{item.lastMessage || 'No messages yet'}</Text>
                 </View>
                 <View style={styles.convoMeta}>
@@ -104,6 +110,7 @@ const styles = StyleSheet.create({
     },
     convoInfo: { flex: 1 },
     convoTitle: { color: COLORS.text, fontSize: 16, fontWeight: 'bold' },
+    convoEmail: { color: COLORS.primary, fontSize: 12, marginTop: 2 },
     lastMsg: { color: COLORS.textSecondary, fontSize: 13, marginTop: 4 },
     convoMeta: { alignItems: 'flex-end', gap: 4 },
     timeText: { color: COLORS.textSecondary, fontSize: 11 },

@@ -93,7 +93,7 @@ export default function ChatScreen({ route, navigation }) {
                     <ChevronLeft color={COLORS.text} size={24} />
                 </TouchableOpacity>
                 <View style={styles.headerInfo}>
-                    <Text style={styles.headerTitle}>Support Chat</Text>
+                    <Text style={styles.headerTitle}>{route.params?.userName || 'Support Chat'}</Text>
                     <View style={styles.secureBadge}>
                         <ShieldCheck color={COLORS.success} size={12} />
                         <Text style={styles.secureText}>End-to-end Encrypted</Text>
