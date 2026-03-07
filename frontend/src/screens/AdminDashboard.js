@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { getAllAppointments, updateAppointmentStatus, getAdminAnalytics, getBarbersList, assignBarber, deleteAppointment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus, Trash2 } from 'lucide-react-native';
+import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus, Trash2, MessageSquare } from 'lucide-react-native';
 
 export default function AdminDashboard({ navigation }) {
     const insets = useSafeAreaInsets();
