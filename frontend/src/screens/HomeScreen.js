@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ScrollView, ActivityIndicator, RefreshControl, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ScrollView, ActivityIndicator, RefreshControl, Modal, Alert, Dimensions, ImageBackground } from 'react-native';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH - 48;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
 import { getPackages, getStyles, rateStyle, getAdminInfo, getCategories, toggleWishlist as apiToggleWishlist } from '../services/api';
@@ -136,6 +137,59 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
     );
 
+    const renderSwappingStyle = ({ item }) => (
+        <TouchableOpacity
+            style={styles.swapCard}
+            onPress={() => navigation.navigate('Booking', { item, isPackage: false })}
+            activeOpacity={0.9}
+        >
+            <ImageBackground
+                source={{ uri: item.image || 'https://images.unsplash.com/photo-1621605815841-28565f57fc97?auto=format&fit=crop&q=80&w=600' }}
+                style={styles.swapImage}
+                imageStyle={{ borderRadius: 24 }}
+            >
+                <LinearGradient
+                    colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.8)']}
+                    style={styles.swapGradient}
+                >
+                    <View style={styles.swapHeader}>
+                        <View style={styles.priceBadge}>
+                            <Text style={styles.priceBadgeText}>${item.price}</Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => handleWishlistToggle(item.id)}
+                            style={styles.favCircle}
+                        >
+                            <Heart
+                                color={wishlist.includes(item.id) ? COLORS.primary : '#FFF'}
+                                fill={wishlist.includes(item.id) ? COLORS.primary : "transparent"}
+                                size={20}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.swapFooter}>
+                        <View style={styles.swapInfo}>
+                            <Text style={styles.swapName}>{item.name}</Text>
+                            <TouchableOpacity style={styles.swapRating} onPress={() => handleRatePress(item)}>
+                                <Star color="#FFD700" size={14} fill="#FFD700" />
+                                <Text style={styles.swapRatingText}>
+                                    {`${item.avgRating?.toFixed(1) || '0.0'} (${item.ratingCount || 0})`}
+                                </Text>
+                                <View style={styles.rateNowBadge}>
+                                    <Text style={styles.rateNowText}>Rate</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.swapAction}>
+                            <ChevronRight color="#000" size={24} />
+                        </View>
+                    </View>
+                </LinearGradient>
+            </ImageBackground>
+        </TouchableOpacity>
+    );
+
     const renderStyle = ({ item }) => (
         <TouchableOpacity
             style={styles.styleCard}
@@ -251,15 +305,16 @@ export default function HomeScreen({ navigation }) {
                                 data={stylesData.filter(s => !selectedCategory || s.categoryId === selectedCategory)}
                                 renderItem={({ item }) => (
                                     <View style={styles.carouselItem}>
-                                        {renderStyle({ item })}
+                                        {renderSwappingStyle({ item })}
                                     </View>
                                 )}
                                 keyExtractor={item => item.id}
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
                                 decelerationRate="fast"
-                                snapToInterval={330}
-                                contentContainerStyle={{ paddingHorizontal: 24 }}
+                                snapToInterval={SCREEN_WIDTH - 24} // card width + small margin
+                                snapToAlignment="center"
+                                contentContainerStyle={{ paddingHorizontal: 12 }}
                             />
                         </View>
 
@@ -612,13 +667,115 @@ const styles = StyleSheet.create({
         color: COLORS.background,
         fontWeight: 'bold'
     },
-    carouselContainer: {
-        marginTop: 16,
-        marginBottom: 40
-    },
     carouselItem: {
-        width: 330,
-        marginRight: 0
+        width: SCREEN_WIDTH - 24,
+        paddingHorizontal: 12,
+    },
+    swapCard: {
+        width: '100%',
+        height: 480,
+        borderRadius: 24,
+        overflow: 'hidden',
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+    },
+    swapImage: {
+        width: '100%',
+        height: '100%',
+    },
+    swapGradient: {
+        flex: 1,
+        justifyContent: 'space-between',
+        padding: 24,
+    },
+    swapHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    priceBadge: {
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: COLORS.primary + '40',
+    },
+    priceBadgeText: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
+    favCircle: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    swapFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+    },
+    swapInfo: {
+        flex: 1,
+        gap: 8,
+    },
+    swapName: {
+        color: '#FFF',
+        fontSize: 28,
+        fontWeight: 'bold',
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
+    },
+    swapRating: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        alignSelf: 'flex-start',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    swapRatingText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    rateNowBadge: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+        marginLeft: 4,
+    },
+    rateNowText: {
+        color: '#000',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    swapAction: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: COLORS.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
     },
     styleCard: {
         backgroundColor: COLORS.card,
