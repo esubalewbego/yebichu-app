@@ -582,21 +582,43 @@ const styles = StyleSheet.create({
     },
     swapCard: {
         width: '100%',
-        height: 480,
+        height: 520,
         borderRadius: 24,
         overflow: 'hidden',
+        backgroundColor: COLORS.card,
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 10,
     },
-    swapImage: {
+    swapImageBg: {
         width: '100%',
         height: '100%',
     },
-    swapGradient: {
+    swapImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 24,
+    },
+    placeholderContainer: {
         flex: 1,
+        backgroundColor: '#151515',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 12,
+    },
+    placeholderText: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    swapGradient: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '70%',
         justifyContent: 'space-between',
         padding: 24,
     },
@@ -686,54 +708,15 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 5,
     },
-    styleCard: {
-        backgroundColor: COLORS.card,
-        borderRadius: 22,
-        padding: 14,
-        marginBottom: 16,
-        flexDirection: 'row',
+    emptyContainer: {
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#333',
-    },
-    styleThumb: {
-        width: 72,
-        height: 72,
-        borderRadius: 16,
-        marginRight: 16,
-    },
-    styleInfo: {
-        flex: 1,
-        gap: 4,
-    },
-    styleName: {
-        color: COLORS.text,
-        fontSize: 17,
-        fontWeight: 'bold',
-    },
-    styleMeta: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    styleRating: {
-        color: COLORS.textSecondary,
-        fontSize: 12,
-    },
-    stylePrice: {
-        color: COLORS.textSecondary,
-        fontSize: 13,
-        marginTop: 2,
-    },
-    styleAction: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: COLORS.background,
         justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#333',
+        marginTop: 60,
+        gap: 16,
+    },
+    emptyText: {
+        color: COLORS.textSecondary,
+        fontSize: 16,
     },
     promoCard: {
         marginHorizontal: 24,
