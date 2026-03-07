@@ -96,7 +96,17 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
-    const renderSwappingStyle = ({ item }) => (
+    const flatListRef = React.useRef(null);
+
+    const handleNextStyle = (index) => {
+        if (flatListRef.current && index < stylesData.length - 1) {
+            flatListRef.current.scrollToIndex({ index: index + 1, animated: true });
+        } else if (flatListRef.current) {
+            flatListRef.current.scrollToIndex({ index: 0, animated: true });
+        }
+    };
+
+    const renderSwappingStyle = ({ item, index }) => (
         <TouchableOpacity
             style={styles.swapCard}
             onPress={() => navigation.navigate('Booking', { item, isPackage: false })}
@@ -124,7 +134,10 @@ export default function HomeScreen({ navigation }) {
                             <Text style={styles.priceBadgeText}>${item.price}</Text>
                         </View>
                         <TouchableOpacity
-                            onPress={() => handleWishlistToggle(item.id)}
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                handleWishlistToggle(item.id);
+                            }}
                             style={styles.favCircle}
                         >
                             <Heart
@@ -138,7 +151,13 @@ export default function HomeScreen({ navigation }) {
                     <View style={styles.swapFooter}>
                         <View style={styles.swapInfo}>
                             <Text style={styles.swapName}>{item.name}</Text>
-                            <TouchableOpacity style={styles.swapRating} onPress={() => handleRatePress(item)}>
+                            <TouchableOpacity
+                                style={styles.swapRating}
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    handleRatePress(item);
+                                }}
+                            >
                                 <Star color="#FFD700" size={14} fill="#FFD700" />
                                 <Text style={styles.swapRatingText}>
                                     {`${item.avgRating?.toFixed(1) || '0.0'} (${item.ratingCount || 0})`}
@@ -148,9 +167,15 @@ export default function HomeScreen({ navigation }) {
                                 </View>
                             </TouchableOpacity>
                         </View>
-                        <View style={styles.swapAction}>
+                        <TouchableOpacity
+                            style={styles.swapAction}
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                handleNextStyle(index);
+                            }}
+                        >
                             <ChevronRight color="#000" size={24} />
-                        </View>
+                        </TouchableOpacity>
                     </View>
                 </LinearGradient>
             </View>
@@ -223,10 +248,11 @@ export default function HomeScreen({ navigation }) {
 
                         <View style={styles.carouselContainer}>
                             <FlatList
+                                ref={flatListRef}
                                 data={stylesData.filter(s => !selectedCategory || s.categoryId === selectedCategory)}
-                                renderItem={({ item }) => (
+                                renderItem={({ item, index }) => (
                                     <View style={styles.carouselItem}>
-                                        {renderSwappingStyle({ item })}
+                                        {renderSwappingStyle({ item, index })}
                                     </View>
                                 )}
                                 keyExtractor={item => item.id}

@@ -39,13 +39,19 @@ export const AuthProvider = ({ children }) => {
         return unsubscribe;
     }, []);
 
-    const login = async (email, password) => {
+    const login = async (identifier, password) => {
         setLoading(true);
         try {
+            let email = identifier;
+            // If it's not an email, we need to resolve it on the backend
+            if (!identifier.includes('@')) {
+                const { loginIdentifier } = require('../services/api');
+                const { data } = await loginIdentifier(identifier);
+                email = data.email;
+            }
             await signInWithEmailAndPassword(auth, email, password);
-            // onAuthStateChanged will trigger and handle setting the user state and loading(false)
         } catch (error) {
-            setLoading(false); // Only set to false on error, otherwise let the listener handle it
+            setLoading(false);
             console.error('Login error:', error);
             throw error;
         }

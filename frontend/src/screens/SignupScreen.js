@@ -8,8 +8,8 @@ import { Mail, Lock, User, ChevronLeft, ArrowLeft, ShieldCheck, Smartphone, Scis
 import { useAuth } from '../context/AuthContext';
 
 export default function SignupScreen({ navigation }) {
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,15 +17,15 @@ export default function SignupScreen({ navigation }) {
     const { signup } = useAuth();
 
     const handleSignup = async () => {
-        if (!email || !password || !firstName || !lastName) {
+        if (!email || !password || !fullName || !username) {
             Alert.alert('Error', 'Please fill in all fields');
             return;
         }
         setLoading(true);
         try {
             await signup({
-                firstName,
-                lastName,
+                fullName,
+                username,
                 email,
                 password
             });
@@ -70,31 +70,32 @@ export default function SignupScreen({ navigation }) {
                     </View>
 
                     <View style={styles.form}>
-                        <View style={styles.row}>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>First Name</Text>
-                                <View style={styles.inputWrapper}>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="John"
-                                        placeholderTextColor="#555"
-                                        value={firstName}
-                                        onChangeText={setFirstName}
-                                    />
-                                </View>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Full Name</Text>
+                            <View style={styles.inputWrapper}>
+                                <User color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="John Doe"
+                                    placeholderTextColor="#555"
+                                    value={fullName}
+                                    onChangeText={setFullName}
+                                />
                             </View>
-                            <View style={{ width: 16 }} />
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>Last Name</Text>
-                                <View style={styles.inputWrapper}>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="Doe"
-                                        placeholderTextColor="#555"
-                                        value={lastName}
-                                        onChangeText={setLastName}
-                                    />
-                                </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Username</Text>
+                            <View style={styles.inputWrapper}>
+                                <Scissors color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="johndoe"
+                                    placeholderTextColor="#555"
+                                    value={username}
+                                    onChangeText={setUsername}
+                                    autoCapitalize="none"
+                                />
                             </View>
                         </View>
 

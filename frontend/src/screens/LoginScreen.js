@@ -80,16 +80,15 @@ export default function LoginScreen({ navigation }) {
                         <Text style={styles.formSub}>Sign in to continue your journey</Text>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Email Address</Text>
+                            <Text style={styles.label}>Email or Username</Text>
                             <View style={styles.inputWrapper}>
                                 <Mail color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="your@email.com"
+                                    placeholder="email or username"
                                     placeholderTextColor="#555"
                                     value={email}
                                     onChangeText={setEmail}
-                                    keyboardType="email-address"
                                     autoCapitalize="none"
                                 />
                             </View>

@@ -2,21 +2,30 @@ const { auth, db } = require('../config/firebase');
 
 const signup = async (req, res) => {
     try {
-        const { email, password, firstName, lastName, role } = req.body;
+        const { email, password, fullName, username } = req.body;
+
+        if (!fullName || !username) {
+            return res.status(400).json({ error: 'Full Name and Username are required' });
+        }
+
+        // Check if username already exists
+        const usernameCheck = await db.collection('users').where('username', '==', username).get();
+        if (!usernameCheck.empty) {
+            return res.status(400).json({ error: 'Username already taken' });
+        }
 
         // Create Firebase User
         const userRecord = await auth.createUser({
             email,
             password,
-            displayName: `${firstName} ${lastName}`,
+            displayName: fullName,
         });
 
         // Save additional profile info in Firestore
-        // New users are ALWAYS 'user' role. Admin manually elevates to 'barber'.
         const userRole = 'user';
         await db.collection('users').doc(userRecord.uid).set({
-            firstName,
-            lastName,
+            fullName,
+            username: username.toLowerCase(),
             email,
             role: userRole,
             wishlist: [],
@@ -122,4 +131,29 @@ const toggleWishlist = async (req, res) => {
     }
 };
 
-module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist };
+const loginWithIdentifier = async (req, res) => {
+    try {
+        const { identifier } = req.body;
+
+        if (!identifier) {
+            return res.status(400).json({ error: 'Identifier (email or username) is required' });
+        }
+
+        let email = identifier;
+
+        // If identifier is not an email, look up by username
+        if (!identifier.includes('@')) {
+            const snapshot = await db.collection('users').where('username', '==', identifier.toLowerCase()).limit(1).get();
+            if (snapshot.empty) {
+                return res.status(404).json({ error: 'User not found with this username' });
+            }
+            email = snapshot.docs[0].data().email;
+        }
+
+        res.status(200).json({ email });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist, loginWithIdentifier };

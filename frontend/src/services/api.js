@@ -28,6 +28,7 @@ api.interceptors.request.use(
 
 // Auth
 export const signup = (data) => api.post('/auth/signup', data);
+export const loginIdentifier = (identifier) => api.post('/auth/login-identifier', { identifier });
 export const getProfile = (userId) => api.get(`/auth/profile/${userId}`);
 
 // Packages
