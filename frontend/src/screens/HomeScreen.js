@@ -232,42 +232,35 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 ) : (
                     <>
-                        <View style={styles.sectionHeader}>
-                            <View>
-                                <Text style={styles.sectionTitle}>Exclusive Packages</Text>
-                                <Text style={styles.sectionSubtitle}>Curated grooming experiences</Text>
-                            </View>
-                            <TouchableOpacity>
-                                <Text style={styles.viewAllText}>See All</Text>
-                            </TouchableOpacity>
+                        <View style={styles.categoriesContainer}>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
+                                {categories.map(cat => (
+                                    <TouchableOpacity
+                                        key={cat.id || 'all'}
+                                        style={[styles.catBadge, selectedCategory === cat.id && styles.activeCatBadge]}
+                                        onPress={() => setSelectedCategory(cat.id)}
+                                    >
+                                        <Text style={[styles.catText, selectedCategory === cat.id && styles.activeCatText]}>{cat.name}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
                         </View>
 
-                        <FlatList
-                            data={packages}
-                            renderItem={renderPackage}
-                            keyExtractor={item => item.id}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.packagesList}
-                            decelerationRate="fast"
-                            snapToInterval={286} // card width + margin
-                        />
-
-                        <View style={styles.tabContainer}>
-                            <TouchableOpacity
-                                style={[styles.tab, activeTab === 'all' && styles.activeTab]}
-                                onPress={() => setActiveTab('all')}
-                            >
-                                <Scissors color={activeTab === 'all' ? COLORS.background : COLORS.textSecondary} size={18} />
-                                <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Styles</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
-                                onPress={() => setActiveTab('favorites')}
-                            >
-                                <Heart color={activeTab === 'favorites' ? COLORS.background : COLORS.textSecondary} size={18} fill={activeTab === 'favorites' ? COLORS.background : "transparent"} />
-                                <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>My Favorites</Text>
-                            </TouchableOpacity>
+                        <View style={styles.carouselContainer}>
+                            <FlatList
+                                data={stylesData.filter(s => !selectedCategory || s.categoryId === selectedCategory)}
+                                renderItem={({ item }) => (
+                                    <View style={styles.carouselItem}>
+                                        {renderStyle({ item })}
+                                    </View>
+                                )}
+                                keyExtractor={item => item.id}
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                decelerationRate="fast"
+                                snapToInterval={330}
+                                contentContainerStyle={{ paddingHorizontal: 24 }}
+                            />
                         </View>
 
                         <View style={styles.stylesList}>
