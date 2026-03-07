@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db, admin } = require('../config/firebase');
 
 const sendMessage = async (req, res) => {
     try {
@@ -13,7 +13,7 @@ const sendMessage = async (req, res) => {
             senderId,
             receiverId,
             text,
-            timestamp: new Date().toISOString(),
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
             read: false
         };
 
@@ -29,11 +29,11 @@ const sendMessage = async (req, res) => {
         // Update conversation metadata
         await db.collection('conversations').doc(conversationId).set({
             lastMessage: text,
-            lastUpdate: message.timestamp,
+            lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
             participants
         }, { merge: true });
 
-        res.status(201).json(message);
+        res.status(201).json({ ...message, timestamp: new Date().toISOString() });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -61,7 +61,7 @@ const getConversations = async (req, res) => {
                     return {
                         ...convo,
                         otherParticipant: {
-                            name: userData.firstName ? `${userData.firstName} ${userData.lastName || ''}` : (userData.displayName || userData.email?.split('@')[0] || 'User'),
+                            name: userData.role === 'admin' ? 'Admin Support' : (userData.firstName ? `${userData.firstName} ${userData.lastName || ''}` : (userData.displayName || userData.email?.split('@')[0] || 'User')),
                             email: userData.email || '',
                             role: userData.role
                         }

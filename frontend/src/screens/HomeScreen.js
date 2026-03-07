@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ScrollView, ActivityIndicator, RefreshControl, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
-import { getPackages, getStyles, rateStyle } from '../services/api';
+import { getPackages, getStyles, rateStyle, getAdminInfo, toggleWishlist as apiToggleWishlist } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart, Filter, MessageSquare } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,10 +17,46 @@ export default function HomeScreen({ navigation }) {
     const [selectedStyle, setSelectedStyle] = useState(null);
     const [userRating, setUserRating] = useState(5);
     const [submittingRating, setSubmittingRating] = useState(false);
+    const [wishlist, setWishlist] = useState(user?.wishlist || []);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [activeTab, setActiveTab] = useState('all'); // 'all' or 'favorites'
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (user) {
+            fetchData();
+            loadAdminInfo();
+            fetchCategories();
+        }
+    }, [user]);
+
+    const loadAdminInfo = async () => {
+        try {
+            const { data } = await getAdminInfo();
+            setAdminUid(data.uid);
+        } catch (error) {
+            console.error('Failed to load admin info:', error);
+        }
+    };
+
+    const handleWishlistToggle = async (id) => {
+        try {
+            const { data } = await apiToggleWishlist(id);
+            setWishlist(data.wishlist);
+        } catch (error) {
+            console.error('Wishlist toggle failed:', error);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const { getCategories } = require('../services/api');
+            const { data } = await getCategories();
+            setCategories([{ id: null, name: 'All' }, ...data]);
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -87,8 +123,15 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 </View>
             </LinearGradient>
-            <TouchableOpacity style={styles.wishlistBtn}>
-                <Heart color="#fff" size={18} />
+            <TouchableOpacity
+                style={styles.wishlistBtn}
+                onPress={() => handleWishlistToggle(item.id)}
+            >
+                <Heart
+                    color={wishlist.includes(item.id) ? COLORS.primary : "#fff"}
+                    fill={wishlist.includes(item.id) ? COLORS.primary : "transparent"}
+                    size={18}
+                />
             </TouchableOpacity>
         </TouchableOpacity>
     );
@@ -104,11 +147,20 @@ export default function HomeScreen({ navigation }) {
                 style={styles.styleThumb}
             />
             <View style={styles.styleInfo}>
-                <Text style={styles.styleName}>{item.name}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Text style={styles.styleName}>{item.name}</Text>
+                    <TouchableOpacity onPress={() => handleWishlistToggle(item.id)} style={{ padding: 4 }}>
+                        <Heart
+                            color={wishlist.includes(item.id) ? COLORS.primary : COLORS.textSecondary}
+                            fill={wishlist.includes(item.id) ? COLORS.primary : "transparent"}
+                            size={16}
+                        />
+                    </TouchableOpacity>
+                </View>
                 <TouchableOpacity style={styles.styleMeta} onPress={() => handleRatePress(item)}>
                     <Star color="#FFD700" size={12} fill="#FFD700" />
                     <Text style={styles.styleRating}>
-                        {item.avgRating ? `${item.avgRating} (${item.ratingCount || 0})` : 'No ratings'}
+                        {`${item.avgRating?.toFixed(1) || '0.0'} (${item.ratingCount || 0})`}
                     </Text>
                 </TouchableOpacity>
                 <Text style={styles.stylePrice}>Starting from <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>${item.price}</Text></Text>
@@ -133,16 +185,13 @@ export default function HomeScreen({ navigation }) {
                     <View style={styles.headerRight}>
                         <TouchableOpacity
                             style={styles.iconBtn}
-                            onPress={() => navigation.navigate('Chat', { receiverId: 'admin_uid_fallback' })}
+                            onPress={() => navigation.navigate('Chat', { receiverId: adminUid || 'admin', userName: 'Admin Support' })}
                         >
                             <MessageSquare color={COLORS.primary} size={22} />
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.iconBtn}>
                             <Bell color={COLORS.text} size={22} />
                             <View style={styles.notifDot} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={logout} style={styles.profileBtn}>
-                            <User color={COLORS.primary} size={24} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -204,22 +253,40 @@ export default function HomeScreen({ navigation }) {
                             snapToInterval={286} // card width + margin
                         />
 
-                        <View style={[styles.sectionHeader, { marginTop: 32 }]}>
-                            <View>
-                                <Text style={styles.sectionTitle}>Popular Styles</Text>
-                                <Text style={styles.sectionSubtitle}>Trending hair designs</Text>
-                            </View>
-                            <TouchableOpacity>
-                                <Text style={styles.viewAllText}>Discover</Text>
+                        <View style={styles.tabContainer}>
+                            <TouchableOpacity
+                                style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+                                onPress={() => setActiveTab('all')}
+                            >
+                                <Scissors color={activeTab === 'all' ? COLORS.background : COLORS.textSecondary} size={18} />
+                                <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Styles</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+                                onPress={() => setActiveTab('favorites')}
+                            >
+                                <Heart color={activeTab === 'favorites' ? COLORS.background : COLORS.textSecondary} size={18} fill={activeTab === 'favorites' ? COLORS.background : "transparent"} />
+                                <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>My Favorites</Text>
                             </TouchableOpacity>
                         </View>
 
                         <View style={styles.stylesList}>
-                            {stylesData.map(item => (
-                                <View key={item.id}>
-                                    {renderStyle({ item })}
+                            {stylesData
+                                .filter(item => activeTab === 'all' || wishlist.includes(item.id))
+                                .map(item => (
+                                    <View key={item.id}>
+                                        {renderStyle({ item })}
+                                    </View>
+                                ))}
+                            {activeTab === 'favorites' && stylesData.filter(item => wishlist.includes(item.id)).length === 0 && (
+                                <View style={styles.emptyFavorites}>
+                                    <Heart color={COLORS.textSecondary} size={48} style={{ opacity: 0.2 }} />
+                                    <Text style={styles.emptyFavoritesText}>No favorites yet</Text>
+                                    <TouchableOpacity style={styles.discoverBtn} onPress={() => setActiveTab('all')}>
+                                        <Text style={styles.discoverBtnText}>Discover Styles</Text>
+                                    </TouchableOpacity>
                                 </View>
-                            ))}
+                            )}
                         </View>
 
                     </>
@@ -523,8 +590,42 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    stylesList: {
+    categoriesContainer: {
+        marginTop: 32,
+        marginBottom: 8
+    },
+    categoriesScroll: {
         paddingHorizontal: 24,
+        gap: 12
+    },
+    catBadge: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 14,
+        backgroundColor: COLORS.card,
+        borderWidth: 1,
+        borderColor: '#333'
+    },
+    activeCatBadge: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary
+    },
+    catText: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        fontWeight: '600'
+    },
+    activeCatText: {
+        color: COLORS.background,
+        fontWeight: 'bold'
+    },
+    carouselContainer: {
+        marginTop: 16,
+        marginBottom: 40
+    },
+    carouselItem: {
+        width: 330,
+        marginRight: 0
     },
     styleCard: {
         backgroundColor: COLORS.card,

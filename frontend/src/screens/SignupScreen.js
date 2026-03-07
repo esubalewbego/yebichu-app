@@ -12,7 +12,6 @@ export default function SignupScreen({ navigation }) {
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('user');
     const [loading, setLoading] = useState(false);
     const insets = useSafeAreaInsets();
     const { signup } = useAuth();
@@ -28,8 +27,7 @@ export default function SignupScreen({ navigation }) {
                 firstName,
                 lastName,
                 email,
-                password,
-                role
+                password
             });
 
             Alert.alert('Success', `Account created successfully!`, [
@@ -131,37 +129,6 @@ export default function SignupScreen({ navigation }) {
                             </View>
                         </View>
 
-                        <View style={styles.roleSection}>
-                            <Text style={styles.label}>I am a...</Text>
-                            <View style={styles.roleGrid}>
-                                <TouchableOpacity
-                                    style={[styles.roleCard, role === 'user' && styles.roleCardActive]}
-                                    onPress={() => setRole('user')}
-                                >
-                                    <User color={role === 'user' ? COLORS.primary : COLORS.textSecondary} size={22} />
-                                    <Text style={[styles.roleCardText, role === 'user' && styles.roleCardTextActive]}>Customer</Text>
-                                    {role === 'user' && <View style={styles.activeDot} />}
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={[styles.roleCard, role === 'barber' && styles.roleCardActive]}
-                                    onPress={() => setRole('barber')}
-                                >
-                                    <Scissors color={role === 'barber' ? COLORS.primary : COLORS.textSecondary} size={22} />
-                                    <Text style={[styles.roleCardText, role === 'barber' && styles.roleCardTextActive]}>Barber</Text>
-                                    {role === 'barber' && <View style={styles.activeDot} />}
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={[styles.roleCard, role === 'admin' && styles.roleCardActive]}
-                                    onPress={() => setRole('admin')}
-                                >
-                                    <ShieldCheck color={role === 'admin' ? COLORS.primary : COLORS.textSecondary} size={22} />
-                                    <Text style={[styles.roleCardText, role === 'admin' && styles.roleCardTextActive]}>Admin</Text>
-                                    {role === 'admin' && <View style={styles.activeDot} />}
-                                </TouchableOpacity>
-                            </View>
-                        </View>
 
                         <View style={styles.termsBox}>
                             <Text style={styles.termsText}>
@@ -267,37 +234,6 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         color: COLORS.text,
         fontSize: 15,
-    },
-    roleSection: {
-        marginBottom: 32,
-        marginTop: 10,
-    },
-    roleGrid: {
-        flexDirection: 'row',
-        gap: 16,
-    },
-    roleCard: {
-        flex: 1,
-        backgroundColor: COLORS.card,
-        borderRadius: 20,
-        padding: 20,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#333',
-        position: 'relative',
-    },
-    roleCardActive: {
-        borderColor: COLORS.primary,
-        backgroundColor: COLORS.primary + '05',
-    },
-    roleCardText: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginTop: 10,
-    },
-    roleCardTextActive: {
-        color: COLORS.text,
     },
     activeDot: {
         position: 'absolute',

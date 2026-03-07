@@ -5,7 +5,8 @@ import { COLORS } from '../theme/colors';
 import { getConversations } from '../services/api';
 import { MessageSquare, ChevronRight, User } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { auth } from '../config/firebase';
+import { auth, db } from '../config/firebase';
+import { collection, query, where, orderBy, onSnapshot, getDoc, doc as fsDoc } from 'firebase/firestore';
 
 export default function ChatListScreen({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -13,18 +14,78 @@ export default function ChatListScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchConversations();
+        const uid = auth.currentUser?.uid;
+        if (!uid) return;
+
+        let unsubscribe;
+
+        const setupListener = async () => {
+            let participantsToMatch = [uid];
+            try {
+                const userSnap = await getDoc(fsDoc(db, 'users', uid));
+                if (userSnap.exists() && userSnap.data().role === 'admin') {
+                    participantsToMatch.push('admin');
+                }
+            } catch (err) {
+                console.error('Error fetching user role for chat query:', err);
+            }
+
+            console.log('Chat Query Participants:', participantsToMatch);
+
+            const q = query(
+                collection(db, 'conversations'),
+                where('participants', 'array-contains-any', participantsToMatch),
+                orderBy('lastUpdate', 'desc')
+            );
+
+            unsubscribe = onSnapshot(q, async (snapshot) => {
+                // ... (existing logic)
+                const convos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                const enrichedConvos = await Promise.all(convos.map(async (convo) => {
+                    const otherUid = convo.participants.find(p => p !== uid && p !== 'admin');
+                    if (!otherUid) return convo;
+
+                    try {
+                        const userSnap = await getDoc(fsDoc(db, 'users', otherUid));
+                        if (userSnap.exists()) {
+                            const userData = userSnap.data();
+                            return {
+                                ...convo,
+                                otherParticipant: {
+                                    name: userData.role === 'admin' ? 'Admin Support' : (userData.firstName ? `${userData.firstName} ${userData.lastName || ''}` : (userData.displayName || userData.email?.split('@')[0] || 'User')),
+                                    email: userData.email || ''
+                                }
+                            };
+                        }
+                    } catch (err) {
+                        console.error('Error fetching participant:', err);
+                    }
+                    return convo;
+                }));
+
+                setConversations(enrichedConvos);
+                setLoading(false);
+            }, (error) => {
+                console.error('Chat list listener error:', error);
+                setLoading(false);
+                if (error.message.includes('index')) {
+                    Alert.alert('Firestore Index Needed', 'This query requires a composite index. Please click the link in your console or check Firebase documentation.');
+                }
+            });
+        };
+
+        setupListener();
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
     }, []);
 
-    const fetchConversations = async () => {
-        try {
-            const { data } = await getConversations();
-            setConversations(data);
-        } catch (error) {
-            console.error('Failed to fetch conversations:', error);
-        } finally {
-            setLoading(false);
-        }
+    const fetchConversations = () => {
+        // Now handled by onSnapshot, but keeping the function for refresh control if needed
+        setLoading(true);
+        // Refresh items will naturally happen via onSnapshot, but we can re-trigger if needed
     };
 
     const renderItem = ({ item }) => {

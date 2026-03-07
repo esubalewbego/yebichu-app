@@ -265,6 +265,28 @@ export default function AdminDashboard({ navigation }) {
                             <Text style={styles.mgmtCardTitle}>Messages</Text>
                             <Text style={styles.mgmtCardSub}>Client Support</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.mgmtCard}
+                            onPress={() => navigation.navigate('ManageStyles')}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: '#E91E6315' }]}>
+                                <Scissors color="#E91E63" size={28} />
+                            </View>
+                            <Text style={styles.mgmtCardTitle}>Styles</Text>
+                            <Text style={styles.mgmtCardSub}>Hair Designs</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.mgmtCard}
+                            onPress={() => navigation.navigate('ManageCategories')}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: '#FF980015' }]}>
+                                <Scissors color="#FF9800" size={28} />
+                            </View>
+                            <Text style={styles.mgmtCardTitle}>Categories</Text>
+                            <Text style={styles.mgmtCardSub}>Style Filters</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 

@@ -5,9 +5,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
-import { getBarberAppointments, updateAppointmentStatus as updateStatus } from '../services/api';
+import { getBarberAppointments, updateAppointmentStatus as updateStatus, recordCashPayment as apiRecordCash } from '../services/api';
 
 export default function BarberDashboard({ navigation }) {
+    // ... inside the component
+    const recordCashPayment = async (id) => {
+        try {
+            await apiRecordCash(id);
+            setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'completed', paymentStatus: 'paid', paymentMethod: 'cash' } : a));
+            Alert.alert('Success', 'Cash payment recorded and appointment completed');
+        } catch (error) {
+            Alert.alert('Error', 'Failed to record cash payment');
+        }
+    };
     const { user, logout } = useAuth();
     const insets = useSafeAreaInsets();
     const [appointments, setAppointments] = useState([]);
@@ -133,6 +143,15 @@ export default function BarberDashboard({ navigation }) {
                 </View>
             </View>
 
+            {(item.status?.toLowerCase() === 'pending' || item.status?.toLowerCase() === 'assigned') && (
+                <TouchableOpacity
+                    style={[styles.completeBtn, { backgroundColor: '#4CAF50', marginTop: 10 }]}
+                    onPress={() => recordCashPayment(item.id)}
+                >
+                    <DollarSign color={COLORS.background} size={20} />
+                    <Text style={styles.completeBtnText}>Record Cash Payment</Text>
+                </TouchableOpacity>
+            )}
             {(item.status?.toLowerCase() === 'pending' || item.status?.toLowerCase() === 'paid' || item.status?.toLowerCase() === 'assigned') && (
                 <TouchableOpacity
                     style={styles.completeBtn}

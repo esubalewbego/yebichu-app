@@ -36,6 +36,16 @@ export const getStyles = () => api.get('/packages/styles');
 export const createPackage = (data) => api.post('/packages', data);
 export const updatePackage = (id, data) => api.put(`/packages/${id}`, data);
 export const deletePackage = (id) => api.delete(`/packages/${id}`);
+
+export const createStyle = (data) => api.post('/packages/styles', data);
+export const updateStyle = (id, data) => api.put(`/packages/styles/${id}`, data);
+export const deleteStyle = (id) => api.delete(`/packages/styles/${id}`);
+
+// Categories
+export const getCategories = () => api.get('/packages/categories');
+export const createCategory = (data) => api.post('/packages/categories', data);
+export const updateCategory = (id, data) => api.put(`/packages/categories/${id}`, data);
+export const deleteCategory = (id) => api.delete(`/packages/categories/${id}`);
 export const uploadImage = (formData) => api.post('/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
 });
@@ -46,9 +56,14 @@ export const getUserAppointments = (userId) => api.get(`/appointments/user/${use
 export const getBarberAppointments = (barberId) => api.get(`/appointments/barber/${barberId}`);
 export const getAllAppointments = () => api.get('/appointments/admin/all');
 export const getAdminAnalytics = () => api.get('/appointments/admin/analytics');
-export const updateAppointmentStatus = (id, status) => api.patch(`/appointments/admin/${id}/status`, { status });
-export const assignBarber = (id, barberId) => api.put(`/appointments/admin/${id}/assign`, { barberId });
-export const deleteAppointment = (id) => api.delete(`/appointments/admin/${id}`);
+export const recordCashPayment = (id) => api.patch(`/appointments/admin/${id}/status`, {
+    status: 'completed',
+    paymentStatus: 'paid',
+    paymentMethod: 'cash'
+});
+export const getAdminInfo = () => api.get('/auth/admin-info');
+export const toggleWishlist = (id) => api.post('/auth/wishlist/toggle', { id });
+
 export const getBarbersList = () => api.get('/auth/barbers');
 
 // Admin User Management

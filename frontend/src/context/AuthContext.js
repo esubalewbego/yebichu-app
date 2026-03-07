@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { signup as apiSignup, getUserProfile } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../config/firebase';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth';
 
 const AuthContext = createContext({});
 
@@ -76,8 +76,17 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const forgotPassword = async (email) => {
+        try {
+            await sendPasswordResetEmail(auth, email);
+        } catch (error) {
+            console.error('Password reset error:', error);
+            throw error;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, signup }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, signup, forgotPassword }}>
             {children}
         </AuthContext.Provider>
     );

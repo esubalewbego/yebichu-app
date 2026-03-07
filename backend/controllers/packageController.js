@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db, admin } = require('../config/firebase');
 
 const getPackages = async (req, res) => {
     try {
@@ -39,17 +39,18 @@ const getStyles = async (req, res) => {
 const rateStyle = async (req, res) => {
     try {
         const { id } = req.params;
-        const { rating, userId } = req.body;
+        const { rating } = req.body;
+        const userId = req.user.uid;
 
         if (!rating || rating < 1 || rating > 5) {
             return res.status(400).json({ error: 'Invalid rating. Must be between 1 and 5.' });
         }
 
         // Store rating in a sub-collection
-        await db.collection('styles').doc(id).collection('ratings').doc(userId || 'anonymous').set({
+        await db.collection('styles').doc(id).collection('ratings').doc(userId).set({
             rating,
-            userId: userId || 'anonymous',
-            timestamp: new Date().toISOString()
+            userId,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
         });
 
         res.status(200).json({ message: 'Rating submitted successfully' });
@@ -93,4 +94,48 @@ const deletePackage = async (req, res) => {
     }
 };
 
-module.exports = { getPackages, getStyles, createPackage, updatePackage, deletePackage, rateStyle };
+const createStyle = async (req, res) => {
+    try {
+        const data = req.body;
+        const docRef = await db.collection('styles').add({
+            ...data,
+            createdAt: new Date().toISOString(),
+        });
+        res.status(201).json({ id: docRef.id, ...data });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const updateStyle = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        await db.collection('styles').doc(id).update(data);
+        res.status(200).json({ id, ...data });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const deleteStyle = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.collection('styles').doc(id).delete();
+        res.status(200).json({ message: 'Style deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = {
+    getPackages,
+    getStyles,
+    createPackage,
+    updatePackage,
+    deletePackage,
+    rateStyle,
+    createStyle,
+    updateStyle,
+    deleteStyle
+};

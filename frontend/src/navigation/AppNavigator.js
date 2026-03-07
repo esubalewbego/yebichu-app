@@ -8,6 +8,8 @@ import PaymentScreen from '../screens/PaymentScreen';
 import ManagePackagesScreen from '../screens/ManagePackagesScreen';
 import ChatScreen from '../screens/ChatScreen';
 import ChatListScreen from '../screens/ChatListScreen';
+import ManageCategoriesScreen from '../screens/ManageCategoriesScreen';
+import ManageStylesScreen from '../screens/ManageStylesScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,6 +30,8 @@ export default function AppNavigator() {
                         <>
                             <Stack.Screen name="ChatList" component={ChatListScreen} />
                             <Stack.Screen name="Services" component={ManagePackagesScreen} />
+                            <Stack.Screen name="ManageCategories" component={ManageCategoriesScreen} />
+                            <Stack.Screen name="ManageStyles" component={ManageStylesScreen} />
                         </>
                     )}
 

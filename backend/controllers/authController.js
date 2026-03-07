@@ -12,14 +12,14 @@ const signup = async (req, res) => {
         });
 
         // Save additional profile info in Firestore
-        // Map role correctly: allow admin only if a special admin key is provided
-        // But allow 'barber' freely during signup
-        const userRole = (role === 'admin' || role === 'barber') ? role : 'user';
+        // New users are ALWAYS 'user' role. Admin manually elevates to 'barber'.
+        const userRole = 'user';
         await db.collection('users').doc(userRecord.uid).set({
             firstName,
             lastName,
             email,
             role: userRole,
+            wishlist: [],
             createdAt: new Date().toISOString(),
         });
 
@@ -85,4 +85,41 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser };
+const getAdminInfo = async (req, res) => {
+    try {
+        const snapshot = await db.collection('users').where('role', '==', 'admin').limit(1).get();
+        if (snapshot.empty) return res.status(404).json({ error: 'Admin not found' });
+
+        const adminDoc = snapshot.docs[0];
+        res.status(200).json({ uid: adminDoc.id, ...adminDoc.data() });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const toggleWishlist = async (req, res) => {
+    try {
+        const { id } = req.body; // Package or Style ID
+        const uid = req.user.uid;
+
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
+
+        const userData = userDoc.data();
+        let wishlist = userData.wishlist || [];
+
+        if (wishlist.includes(id)) {
+            wishlist = wishlist.filter(item => item !== id);
+        } else {
+            wishlist.push(id);
+        }
+
+        await userRef.update({ wishlist });
+        res.status(200).json({ wishlist });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist };

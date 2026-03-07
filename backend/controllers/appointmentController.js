@@ -79,9 +79,37 @@ const getAllAppointments = async (req, res) => {
 const updateAppointmentStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
-        await db.collection('appointments').doc(id).update({ status });
-        res.status(200).json({ id, status });
+        const { status, paymentStatus, paymentMethod } = req.body;
+        const uid = req.user.uid;
+
+        // Fetch user doc to check role
+        const userDoc = await db.collection('users').doc(uid).get();
+        const userData = userDoc.data();
+        const role = userData?.role?.toLowerCase();
+
+        // Fetch appointment to check barberId
+        const apptDoc = await db.collection('appointments').doc(id).get();
+        if (!apptDoc.exists) {
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+        const apptData = apptDoc.data();
+
+        // Security check: Barbers can only update their assigned appointments
+        if (role === 'barber' && apptData.barberId !== uid) {
+            return res.status(403).json({ error: 'Forbidden: You can only update your assigned appointments' });
+        }
+
+        const updateData = {};
+        if (status) updateData.status = status;
+        if (paymentStatus) updateData.paymentStatus = paymentStatus;
+        if (paymentMethod) updateData.paymentMethod = paymentMethod;
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: 'No fields to update' });
+        }
+
+        await db.collection('appointments').doc(id).update(updateData);
+        res.status(200).json({ id, ...updateData });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

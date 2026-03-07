@@ -17,8 +17,9 @@ const authorizeAdmin = async (req, res, next) => {
     try {
         const userDoc = await db.collection('users').doc(req.user.uid).get();
         const userData = userDoc.data();
+        const role = userData?.role?.toLowerCase() || req.user.role?.toLowerCase();
 
-        if (userData && (userData.role === 'admin' || req.user.role === 'admin')) {
+        if (role === 'admin') {
             next();
         } else {
             res.status(403).json({ error: 'Forbidden: Admin access required' });
@@ -28,4 +29,20 @@ const authorizeAdmin = async (req, res, next) => {
     }
 };
 
-module.exports = { authenticate, authorizeAdmin };
+const authorizeBarberOrAdmin = async (req, res, next) => {
+    try {
+        const userDoc = await db.collection('users').doc(req.user.uid).get();
+        const userData = userDoc.data();
+        const role = userData?.role?.toLowerCase() || req.user.role?.toLowerCase();
+
+        if (role === 'admin' || role === 'barber') {
+            next();
+        } else {
+            res.status(403).json({ error: 'Forbidden: Admin or Barber access required' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Authorization error' });
+    }
+};
+
+module.exports = { authenticate, authorizeAdmin, authorizeBarberOrAdmin };

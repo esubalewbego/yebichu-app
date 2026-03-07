@@ -12,7 +12,7 @@ export default function LoginScreen({ navigation }) {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const insets = useSafeAreaInsets();
-    const { login } = useAuth();
+    const { login, forgotPassword } = useAuth();
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -28,6 +28,19 @@ export default function LoginScreen({ navigation }) {
             Alert.alert('Login Failed', 'Invalid email or password. Make sure you have signed up first!');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!email) {
+            Alert.alert('Forgot Password', 'Please enter your email address first.');
+            return;
+        }
+        try {
+            await forgotPassword(email);
+            Alert.alert('Email Sent', 'Check your inbox for a password reset link.');
+        } catch (error) {
+            Alert.alert('Error', 'Failed to send reset email. Please check the email address.');
         }
     };
 
@@ -97,7 +110,7 @@ export default function LoginScreen({ navigation }) {
                             </View>
                         </View>
 
-                        <TouchableOpacity style={styles.forgotBtn}>
+                        <TouchableOpacity style={styles.forgotBtn} onPress={handleForgotPassword}>
                             <Text style={styles.forgotText}>Forgot Password?</Text>
                         </TouchableOpacity>
 
