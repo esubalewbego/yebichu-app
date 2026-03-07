@@ -47,9 +47,7 @@ export const getCategories = () => api.get('/packages/categories');
 export const createCategory = (data) => api.post('/packages/categories', data);
 export const updateCategory = (id, data) => api.put(`/packages/categories/${id}`, data);
 export const deleteCategory = (id) => api.delete(`/packages/categories/${id}`);
-export const uploadImage = (formData) => api.post('/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-});
+export const uploadImage = (formData) => api.post('/upload', formData);
 
 // Appointments
 export const createAppointment = (data) => api.post('/appointments', data);
