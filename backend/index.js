@@ -15,6 +15,12 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Custom Logger to detect blocked requests
+app.use((req, res, next) => {
+    console.log(`>>> [${new Date().toLocaleTimeString()}] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/packages', require('./routes/packageRoutes'));

@@ -94,10 +94,11 @@ export default function ManageStylesScreen({ navigation }) {
             const formDataToUpload = new FormData();
             const filename = asset.uri.split('/').pop();
             const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : `image/jpeg`;
+            const ext = match ? match[1] : 'jpg';
+            const type = `image/${ext}`;
 
             formDataToUpload.append('image', {
-                uri: Platform.OS === 'ios' ? asset.uri.replace('file://', '') : asset.uri,
+                uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
                 type: type,
                 name: filename || 'upload.jpg',
             });
