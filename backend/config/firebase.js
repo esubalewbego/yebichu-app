@@ -11,6 +11,7 @@ try {
         credential: admin.credential.cert(serviceAccount),
     });
     db = admin.firestore();
+    db.settings({ ignoreUndefinedProperties: true });
     auth = admin.auth();
     console.log('✅ Firebase initialized successfully.');
 } catch (error) {
