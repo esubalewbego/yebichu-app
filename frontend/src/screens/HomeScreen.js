@@ -13,7 +13,7 @@ import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart,
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen({ navigation }) {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const insets = useSafeAreaInsets();
     const [stylesData, setHairStyles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -21,7 +21,6 @@ export default function HomeScreen({ navigation }) {
     const [selectedStyle, setSelectedStyle] = useState(null);
     const [userRating, setUserRating] = useState(5);
     const [submittingRating, setSubmittingRating] = useState(false);
-    const [wishlist, setWishlist] = useState(user?.wishlist || []);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [adminUid, setAdminUid] = useState(null);
@@ -46,7 +45,6 @@ export default function HomeScreen({ navigation }) {
     const handleWishlistToggle = async (id) => {
         try {
             const { data } = await apiToggleWishlist(id);
-            setWishlist(data.wishlist);
             updateUser({ wishlist: data.wishlist });
         } catch (error) {
             console.error('Wishlist toggle failed:', error);
@@ -232,8 +230,8 @@ export default function HomeScreen({ navigation }) {
                                                             style={styles.glassFav}
                                                         >
                                                             <Heart
-                                                                color={wishlist.includes(item.id) ? COLORS.primary : '#FFF'}
-                                                                fill={wishlist.includes(item.id) ? COLORS.primary : "transparent"}
+                                                                color={user?.wishlist?.includes(item.id) ? COLORS.primary : '#FFF'}
+                                                                fill={user?.wishlist?.includes(item.id) ? COLORS.primary : "transparent"}
                                                                 size={20}
                                                             />
                                                         </TouchableOpacity>

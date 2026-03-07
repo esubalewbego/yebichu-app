@@ -8,11 +8,10 @@ import { Heart, ChevronRight, Star, Scissors, Package } from 'lucide-react-nativ
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function FavoritesScreen({ navigation }) {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const insets = useSafeAreaInsets();
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { updateUser } = useAuth();
 
     useEffect(() => {
         fetchFavorites();
