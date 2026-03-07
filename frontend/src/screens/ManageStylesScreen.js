@@ -75,9 +75,8 @@ export default function ManageStylesScreen({ navigation }) {
         try {
             let result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 0.8,
+                allowsEditing: false, // Disabling editing to save memory on Android
+                quality: 0.5, // Reduced quality for better stability in Expo Go
             });
 
             if (!result.canceled) {
