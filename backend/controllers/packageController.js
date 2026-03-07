@@ -93,4 +93,4 @@ const deletePackage = async (req, res) => {
     }
 };
 
-module.exports = { getPackages, getStyles, createPackage, updatePackage, deletePackage };
+module.exports = { getPackages, getStyles, createPackage, updatePackage, deletePackage, rateStyle };

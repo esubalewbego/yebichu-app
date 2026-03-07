@@ -2,21 +2,34 @@ const { db } = require('../config/firebase');
 
 const createAppointment = async (req, res) => {
     try {
-        const { userId, barberId, date, time, packageId, styleId, status, item, price, userName, userEmail, tx_ref } = req.body;
+        const {
+            userId,
+            barberId = null,
+            date,
+            time,
+            packageId = null,
+            styleId = null,
+            status = 'pending',
+            item = null,
+            price = 0,
+            userName = 'Customer',
+            userEmail = '',
+            tx_ref = null
+        } = req.body;
 
         const appointment = {
             userId,
-            barberId: barberId || null,
+            barberId,
             date,
             time,
-            packageId: packageId || null,
-            styleId: styleId || null,
-            userName: userName || 'Customer',
-            userEmail: userEmail || '',
+            packageId,
+            styleId,
+            userName,
+            userEmail,
             item: item ? JSON.parse(JSON.stringify(item)) : null,
             price: price || item?.price || 0,
-            status: status || 'pending',
-            tx_ref: tx_ref || null,
+            status,
+            tx_ref,
             createdAt: new Date().toISOString(),
         };
 
