@@ -3,7 +3,24 @@ const { db, admin } = require('../config/firebase');
 const getPackages = async (req, res) => {
     try {
         const packagesSnapshot = await db.collection('packages').get();
-        const packages = packagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const packages = await Promise.all(packagesSnapshot.docs.map(async (doc) => {
+            const data = doc.data();
+            const ratingsSnapshot = await db.collection('packages').doc(doc.id).collection('ratings').get();
+            const ratings = ratingsSnapshot.docs.map(d => d.data().rating);
+
+            const ratingCount = ratings.length;
+            const avgRating = ratingCount > 0
+                ? (ratings.reduce((a, b) => a + b, 0) / ratingCount).toFixed(1)
+                : 0;
+
+            return {
+                id: doc.id,
+                ...data,
+                avgRating: Number(avgRating),
+                ratingCount,
+                isPackage: true
+            };
+        }));
         res.status(200).json(packages);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -27,7 +44,8 @@ const getStyles = async (req, res) => {
                 id: doc.id,
                 ...data,
                 avgRating: Number(avgRating),
-                ratingCount
+                ratingCount,
+                isPackage: false
             };
         }));
         res.status(200).json(styles);
@@ -39,15 +57,17 @@ const getStyles = async (req, res) => {
 const rateStyle = async (req, res) => {
     try {
         const { id } = req.params;
-        const { rating } = req.body;
+        const { rating, isPackage } = req.body;
         const userId = req.user.uid;
 
         if (!rating || rating < 1 || rating > 5) {
             return res.status(400).json({ error: 'Invalid rating. Must be between 1 and 5.' });
         }
 
+        const collection = isPackage ? 'packages' : 'styles';
+
         // Store rating in a sub-collection
-        await db.collection('styles').doc(id).collection('ratings').doc(userId).set({
+        await db.collection(collection).doc(id).collection('ratings').doc(userId).set({
             rating,
             userId,
             timestamp: admin.firestore.FieldValue.serverTimestamp()

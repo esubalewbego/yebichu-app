@@ -61,8 +61,13 @@ export default function HomeScreen({ navigation }) {
 
     const fetchData = async () => {
         try {
-            const { data } = await getStyles();
-            setHairStyles(data);
+            const [stylesRes, packagesRes] = await Promise.all([getStyles(), getPackages()]);
+            // Merge both lists and mark them appropriately
+            const mergedData = [
+                ...stylesRes.data,
+                ...packagesRes.data
+            ];
+            setHairStyles(mergedData);
         } catch (error) {
             console.error('Failed to fetch Home Data:', error);
             setHairStyles([]);
@@ -85,7 +90,11 @@ export default function HomeScreen({ navigation }) {
         if (!selectedStyle) return;
         setSubmittingRating(true);
         try {
-            await rateStyle(selectedStyle.id, { rating: userRating, userId: user?.uid });
+            await rateStyle(selectedStyle.id, {
+                rating: userRating,
+                userId: user?.uid,
+                isPackage: !!selectedStyle.isPackage
+            });
             setRatingModalVisible(false);
             fetchData(); // Refresh to show new average
         } catch (error) {
@@ -109,7 +118,7 @@ export default function HomeScreen({ navigation }) {
     const renderSwappingStyle = ({ item, index }) => (
         <TouchableOpacity
             style={styles.swapCard}
-            onPress={() => navigation.navigate('Booking', { item, isPackage: false })}
+            onPress={() => navigation.navigate('Booking', { item, isPackage: !!item.isPackage })}
             activeOpacity={0.9}
         >
             <View style={styles.swapImageBg}>
