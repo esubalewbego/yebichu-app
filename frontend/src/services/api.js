@@ -62,6 +62,7 @@ export const recordCashPayment = (id) => api.patch(`/appointments/admin/${id}/st
     paymentStatus: 'paid',
     paymentMethod: 'cash'
 });
+export const deleteAppointment = (id) => api.delete(`/appointments/admin/${id}`);
 export const getAdminInfo = () => api.get('/auth/admin-info');
 export const toggleWishlist = (id) => api.post('/auth/wishlist/toggle', { id });
 

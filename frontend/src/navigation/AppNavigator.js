@@ -10,6 +10,8 @@ import ChatScreen from '../screens/ChatScreen';
 import ChatListScreen from '../screens/ChatListScreen';
 import ManageCategoriesScreen from '../screens/ManageCategoriesScreen';
 import ManageStylesScreen from '../screens/ManageStylesScreen';
+import ManageMoreScreen from '../screens/ManageMoreScreen';
+import AdminBookingsScreen from '../screens/AdminBookingsScreen';
 
 const Stack = createStackNavigator();
 
@@ -30,8 +32,10 @@ export default function AppNavigator() {
                         <>
                             <Stack.Screen name="ChatList" component={ChatListScreen} />
                             <Stack.Screen name="Services" component={ManagePackagesScreen} />
-                            <Stack.Screen name="ManageCategories" component={ManageCategoriesScreen} />
+                            <Stack.Screen name="Categories" component={ManageCategoriesScreen} />
                             <Stack.Screen name="ManageStyles" component={ManageStylesScreen} />
+                            <Stack.Screen name="AdminBookings" component={AdminBookingsScreen} />
+                            <Stack.Screen name="MoreMenu" component={ManageMoreScreen} />
                         </>
                     )}
 

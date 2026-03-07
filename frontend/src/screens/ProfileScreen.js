@@ -45,198 +45,125 @@ export default function ProfileScreen() {
     );
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    { paddingTop: insets.top, paddingBottom: insets.bottom + 40 }
+                ]}
+            >
                 <LinearGradient
-                    colors={[COLORS.primary + '20', COLORS.background]}
-                    style={styles.headerGradient}
+                    colors={[COLORS.primary + '25', COLORS.background]}
+                    style={styles.heroSection}
                 >
-                    <View style={styles.profileHeader}>
-                        <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
-                                </Text>
-                            </View>
-                            <View style={styles.roleBadge}>
-                                <Shield color={COLORS.background} size={12} />
-                                <Text style={styles.roleText}>{user?.role?.toUpperCase() || 'USER'}</Text>
+                    <View style={styles.profileBox}>
+                        <View style={styles.avatarLarge}>
+                            <Text style={styles.avatarTxt}>
+                                {user?.email ? user.email.charAt(0).toUpperCase() : 'Y'}
+                            </Text>
+                            <View style={styles.rankBadge}>
+                                <Shield color="#000" size={12} fill="#000" />
                             </View>
                         </View>
-                        <Text style={styles.userName}>{user?.email ? user.email.split('@')[0] : 'User'}</Text>
-                        <Text style={styles.userEmail}>{user?.email}</Text>
+                        <Text style={styles.profileName}>{user?.email ? user.email.split('@')[0] : 'Valued Client'}</Text>
+                        <Text style={styles.profileEmail}>{user?.email}</Text>
+
+                        <View style={styles.statsRow}>
+                            <View style={styles.stat}>
+                                <Text style={styles.statVal}>12</Text>
+                                <Text style={styles.statLab}>Visits</Text>
+                            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.stat}>
+                                <Text style={styles.statVal}>4</Text>
+                                <Text style={styles.statLab}>Faves</Text>
+                            </View>
+                        </View>
                     </View>
                 </LinearGradient>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Account Details</Text>
-                    <View style={styles.card}>
-                        <View style={styles.infoRow}>
-                            <User color={COLORS.textSecondary} size={20} />
-                            <Text style={styles.infoText}>{user?.email ? user.email.split('@')[0] : 'User'}</Text>
-                        </View>
-                        <View style={styles.separator} />
-                        <View style={styles.infoRow}>
-                            <Mail color={COLORS.textSecondary} size={20} />
-                            <Text style={styles.infoText}>{user?.email}</Text>
-                        </View>
-                    </View>
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Preferences</Text>
-                    <View style={styles.card}>
-                        {renderSettingItem(<Settings color={COLORS.text} size={22} />, 'App Settings', 'Theme, Language')}
-                        <View style={styles.separator} />
-                        {renderSettingItem(<Bell color={COLORS.text} size={22} />, 'Notifications', 'Push alerts, emails')}
+                <View style={styles.settingsGroup}>
+                    <Text style={styles.groupLabel}>ACCOUNT MANAGEMENT</Text>
+                    <View style={styles.settingsCard}>
+                        {renderSettingItem(<Settings color={COLORS.primary} size={20} />, 'Profile Preferences', 'Personalize your experience')}
+                        <View style={styles.divider} />
+                        {renderSettingItem(<Bell color={COLORS.primary} size={20} />, 'Push Notifications', 'Manage arrival alerts')}
                         {user?.role === 'user' && (
                             <>
-                                <View style={styles.separator} />
-                                {renderSettingItem(<CreditCard color={COLORS.text} size={22} />, 'Payment Methods', 'Cards, Chapa integration')}
+                                <View style={styles.divider} />
+                                {renderSettingItem(<CreditCard color={COLORS.primary} size={20} />, 'Stored Payments', 'Fast checkout setup')}
                             </>
                         )}
                     </View>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Support</Text>
-                    <View style={styles.card}>
-                        {renderSettingItem(<HelpCircle color={COLORS.text} size={22} />, 'Help & FAQ', 'Contact support team')}
-                        <View style={styles.separator} />
-                        {renderSettingItem(<LogOut color="#FF3B30" size={22} />, 'Log Out', null, true)}
+                <View style={styles.settingsGroup}>
+                    <Text style={styles.groupLabel}>PREMIUM SUPPORT</Text>
+                    <View style={styles.settingsCard}>
+                        {renderSettingItem(<HelpCircle color={COLORS.textSecondary} size={20} />, 'Concierge Help', 'Chat with our support team')}
+                        <View style={styles.divider} />
+                        <TouchableOpacity style={styles.logoutRow} onPress={handleLogout}>
+                            <View style={styles.logoutIconBox}>
+                                <LogOut color="#F44336" size={20} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.logoutTitle}>Terminate Session</Text>
+                                <Text style={styles.logoutSub}>Securely log out of your account</Text>
+                            </View>
+                            <ChevronRight color="#333" size={18} />
+                        </TouchableOpacity>
                     </View>
                 </View>
-                <View style={{ height: 40 }} />
             </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
-    headerGradient: {
-        paddingBottom: 30,
-    },
-    profileHeader: {
-        alignItems: 'center',
-        paddingTop: 20,
-    },
-    avatarContainer: {
-        position: 'relative',
-        marginBottom: 16,
-    },
-    avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+    container: { flex: 1, backgroundColor: COLORS.background },
+    scrollContent: { paddingBottom: 100 },
+    heroSection: { paddingVertical: 40, alignItems: 'center', borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
+    profileBox: { alignItems: 'center', width: '100%' },
+    avatarLarge: {
+        width: 110, height: 110, borderRadius: 55,
         backgroundColor: COLORS.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 4,
-        borderColor: COLORS.background,
+        justifyContent: 'center', alignItems: 'center',
+        borderWidth: 4, borderColor: COLORS.background,
+        elevation: 10, shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3, shadowRadius: 10
     },
-    avatarText: {
-        color: COLORS.background,
-        fontSize: 40,
-        fontWeight: 'bold',
-    },
-    roleBadge: {
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
+    avatarTxt: { color: COLORS.background, fontSize: 44, fontWeight: 'bold' },
+    rankBadge: {
+        position: 'absolute', bottom: 2, right: 2,
+        width: 30, height: 30, borderRadius: 15,
         backgroundColor: COLORS.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        borderWidth: 2,
-        borderColor: COLORS.background,
-        gap: 4,
+        justifyContent: 'center', alignItems: 'center',
+        borderWidth: 3, borderColor: COLORS.background
     },
-    roleText: {
-        color: COLORS.background,
-        fontSize: 10,
-        fontWeight: 'bold',
+    profileName: { color: COLORS.text, fontSize: 26, fontWeight: 'bold', marginTop: 16, textTransform: 'capitalize' },
+    profileEmail: { color: COLORS.textSecondary, fontSize: 14, marginTop: 4 },
+    statsRow: {
+        flexDirection: 'row', alignItems: 'center',
+        marginTop: 24, backgroundColor: 'rgba(255,255,255,0.05)',
+        paddingHorizontal: 28, paddingVertical: 14, borderRadius: 20
     },
-    userName: {
-        color: COLORS.text,
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 4,
-        textTransform: 'capitalize',
-    },
-    userEmail: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-    },
-    section: {
-        paddingHorizontal: 24,
-        marginTop: 24,
-    },
-    sectionTitle: {
-        color: COLORS.textSecondary,
-        fontSize: 13,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        marginBottom: 12,
-        marginLeft: 4,
-    },
-    card: {
-        backgroundColor: COLORS.card,
-        borderRadius: 20,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: '#333',
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        gap: 12,
-    },
-    infoText: {
-        color: COLORS.text,
-        fontSize: 16,
-    },
-    separator: {
-        height: 1,
-        backgroundColor: '#333',
-        my: 8,
-        marginVertical: 8,
-    },
-    settingItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-    },
-    settingIconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: COLORS.background,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
-    settingTextBox: {
-        flex: 1,
-    },
-    settingTitle: {
-        color: COLORS.text,
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    destructiveText: {
-        color: '#FF3B30',
-    },
-    settingSubtitle: {
-        color: COLORS.textSecondary,
-        fontSize: 13,
-        marginTop: 2,
-    },
+    stat: { alignItems: 'center', paddingHorizontal: 16 },
+    statVal: { color: COLORS.text, fontSize: 18, fontWeight: 'bold' },
+    statLab: { color: COLORS.textSecondary, fontSize: 11, marginTop: 2, textTransform: 'uppercase' },
+    statDivider: { width: 1, height: 20, backgroundColor: '#333' },
+    settingsGroup: { paddingHorizontal: 24, marginTop: 32 },
+    groupLabel: { color: COLORS.textSecondary, fontSize: 12, fontWeight: 'bold', letterSpacing: 1.5, marginBottom: 16, marginLeft: 4 },
+    settingsCard: { backgroundColor: COLORS.card, borderRadius: 24, padding: 8, borderWidth: 1, borderColor: '#333' },
+    settingItem: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 16 },
+    settingIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#333' },
+    settingTextBox: { flex: 1 },
+    settingTitle: { color: COLORS.text, fontSize: 16, fontWeight: '600' },
+    settingSubtitle: { color: COLORS.textSecondary, fontSize: 12, marginTop: 2 },
+    divider: { height: 1, backgroundColor: '#333', marginHorizontal: 12, marginVertical: 4 },
+    logoutRow: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 16 },
+    logoutIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#F4433610', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#F4433620' },
+    logoutTitle: { color: '#F44336', fontSize: 16, fontWeight: 'bold' },
+    logoutSub: { color: COLORS.textSecondary, fontSize: 12, marginTop: 2 }
 });

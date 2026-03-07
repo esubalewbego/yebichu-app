@@ -45,7 +45,7 @@ export default function LoginScreen({ navigation }) {
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.container}>
             <LinearGradient
                 colors={[COLORS.background, COLORS.primary + '10', COLORS.background]}
                 style={StyleSheet.absoluteFill}
@@ -56,7 +56,10 @@ export default function LoginScreen({ navigation }) {
                 style={{ flex: 1 }}
             >
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }
+                    ]}
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.logoSection}>
@@ -140,7 +143,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        padding: 24,
+        paddingHorizontal: 24,
         justifyContent: 'center',
     },
     logoSection: {

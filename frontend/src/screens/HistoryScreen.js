@@ -53,7 +53,7 @@ export default function HistoryScreen({ navigation }) {
                     <CalendarCheck color={item.status === 'completed' ? '#4CAF50' : COLORS.primary} size={24} />
                 </View>
                 <View style={styles.cardInfo}>
-                    <Text style={styles.itemName}>{item.name || item.package?.name || item.service}</Text>
+                    <Text style={styles.itemName}>{item.item?.name || item.name || item.package?.name || item.service || 'Service'}</Text>
                     <View style={styles.dateTimeRow}>
                         <Clock color={COLORS.textSecondary} size={14} />
                         <Text style={styles.dateTimeText}>{item.date} • {item.time}</Text>

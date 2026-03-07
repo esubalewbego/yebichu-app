@@ -5,7 +5,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { getAllAppointments, updateAppointmentStatus, getAdminAnalytics, getBarbersList, assignBarber, deleteAppointment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus, Trash2, MessageSquare } from 'lucide-react-native';
+import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus, Trash2, MessageSquare, ShieldCheck } from 'lucide-react-native';
+
+const StatusBadge = ({ status }) => {
+    const bgColor = status === 'completed' ? '#4CAF5020' : status === 'pending' ? '#FFC10720' : '#F4433620';
+    const textColor = status === 'completed' ? '#4CAF50' : status === 'pending' ? '#FFC107' : '#F44336';
+
+    return (
+        <View style={[styles.badge, { backgroundColor: bgColor }]}>
+            <Text style={[styles.badgeText, { color: textColor }]}>{status?.toUpperCase() || 'UNKNOWN'}</Text>
+        </View>
+    );
+};
 
 export default function AdminDashboard({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -68,7 +79,6 @@ export default function AdminDashboard({ navigation }) {
             setAppointments(data);
         } catch (error) {
             console.error(error);
-            // Fallback for mock mode
             setAppointments([]);
         } finally {
             setLoading(false);
@@ -101,55 +111,6 @@ export default function AdminDashboard({ navigation }) {
         ]);
     };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.card}>
-            <View style={styles.cardHeader}>
-                <View>
-                    <Text style={styles.userName}>{item.userName || 'Customer'}</Text>
-                    <Text style={styles.serviceName}>{item.service}</Text>
-                </View>
-                <StatusBadge status={item.status} />
-            </View>
-
-            <View style={styles.cardDetails}>
-                <View style={styles.detailRow}>
-                    <Calendar color={COLORS.primary} size={16} />
-                    <Text style={styles.detailText}>{item.date}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                    <Clock color={COLORS.primary} size={16} />
-                    <Text style={styles.detailText}>{item.time}</Text>
-                </View>
-            </View>
-
-            <View style={styles.actions}>
-                <TouchableOpacity
-                    style={[styles.actionBtn, styles.approveBtn]}
-                    onPress={() => handleStatusUpdate(item.id, 'completed')}
-                >
-                    <CheckCircle color="#fff" size={20} />
-                    <Text style={styles.actionBtnText}>Complete</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.actionBtn, styles.cancelBtn]}
-                    onPress={() => handleStatusUpdate(item.id, 'cancelled')}
-                >
-                    <XCircle color="#fff" size={20} />
-                    <Text style={styles.actionBtnText}>Cancel</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    if (loading) {
-        return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
-        );
-    }
-
     const handleAssignBarber = async (barberId) => {
         try {
             await assignBarber(selectedAppointmentId, barberId);
@@ -161,20 +122,42 @@ export default function AdminDashboard({ navigation }) {
         }
     };
 
+    if (loading && !stats) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+        );
+    }
+
     return (
-        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.container}>
             <LinearGradient
-                colors={[COLORS.primary + '20', COLORS.background]}
-                style={styles.headerGradient}
+                colors={[COLORS.primary + '15', COLORS.background]}
+                style={[styles.headerGradient, { paddingTop: insets.top + 10 }]}
             >
                 <View style={styles.header}>
-                    <View>
-                        <Text style={styles.title}>Admin Panel</Text>
-                        <Text style={styles.subtitle}>Studio Management</Text>
+                    <View style={styles.adminProfile}>
+                        <View style={styles.adminAvatar}>
+                            <ShieldCheck color={COLORS.primary} size={24} />
+                        </View>
+                        <View>
+                            <Text style={styles.adminName}>Administrator</Text>
+                            <Text style={styles.adminRole}>Control Panel Active</Text>
+                        </View>
                     </View>
-                    <TouchableOpacity onPress={fetchData} style={styles.refreshBtn}>
-                        <RefreshCw color={COLORS.primary} size={20} />
-                    </TouchableOpacity>
+                    <View style={styles.headerActions}>
+                        <TouchableOpacity
+                            style={styles.actionCircle}
+                            onPress={() => navigation.navigate('Messages')}
+                        >
+                            <MessageSquare color={COLORS.text} size={20} />
+                            <View style={styles.unreadDot} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.actionCircle} onPress={fetchData}>
+                            <RefreshCw color={COLORS.text} size={20} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </LinearGradient>
 
@@ -183,183 +166,130 @@ export default function AdminDashboard({ navigation }) {
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={fetchData} tintColor={COLORS.primary} />
                 }
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
             >
                 {stats && (
                     <View style={styles.analyticsSection}>
-                        <Text style={styles.sectionTitle}>Business Intelligence</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
-                            <LinearGradient colors={['#1a1a1a', '#0f0f0f']} style={styles.statBox}>
-                                <View style={[styles.statIcon, { backgroundColor: '#4CAF5020' }]}>
-                                    <DollarSign color="#4CAF50" size={20} />
+                        <View style={styles.sectionHeaderRow}>
+                            <Text style={styles.sectionTitle}>Business Intelligence</Text>
+                            <TrendingUp color={COLORS.primary} size={20} />
+                        </View>
+                        <View style={styles.statsGrid}>
+                            <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.mainStatCard}>
+                                <View style={styles.statHeader}>
+                                    <View style={[styles.statIcon, { backgroundColor: '#4CAF5020' }]}>
+                                        <DollarSign color="#4CAF50" size={24} />
+                                    </View>
+                                    <View style={styles.trendBadge}>
+                                        <TrendingUp color="#4CAF50" size={12} />
+                                        <Text style={styles.trendText}>+12%</Text>
+                                    </View>
                                 </View>
-                                <Text style={styles.statVal}>${stats.totalRevenue.toLocaleString()}</Text>
-                                <Text style={styles.statLab}>Total Revenue</Text>
+                                <Text style={styles.mainStatVal}>${stats.totalRevenue.toLocaleString()}</Text>
+                                <Text style={styles.mainStatLab}>Total revenue this year</Text>
                             </LinearGradient>
 
-                            <LinearGradient colors={['#1a1a1a', '#0f0f0f']} style={styles.statBox}>
-                                <View style={[styles.statIcon, { backgroundColor: COLORS.primary + '20' }]}>
-                                    <BarChart3 color={COLORS.primary} size={20} />
-                                </View>
-                                <Text style={styles.statVal}>{stats.totalAppointments}</Text>
-                                <Text style={styles.statLab}>Bookings</Text>
-                            </LinearGradient>
+                            <View style={styles.sideStats}>
+                                <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.smallStatCard}>
+                                    <View style={[styles.statIcon, { backgroundColor: COLORS.primary + '20' }]}>
+                                        <Calendar color={COLORS.primary} size={18} />
+                                    </View>
+                                    <Text style={styles.smallStatVal}>{stats.totalAppointments}</Text>
+                                    <Text style={styles.smallStatLab}>Total Bookings</Text>
+                                </LinearGradient>
 
-                            <LinearGradient colors={['#1a1a1a', '#0f0f0f']} style={styles.statBox}>
-                                <View style={[styles.statIcon, { backgroundColor: '#9C27B020' }]}>
-                                    <TrendingUp color="#9C27B0" size={20} />
-                                </View>
-                                <Text style={styles.statVal}>${stats.monthlyRevenue.toLocaleString()}</Text>
-                                <Text style={styles.statLab}>This Month</Text>
-                            </LinearGradient>
-
-                            <LinearGradient colors={['#1a1a1a', '#0f0f0f']} style={styles.statBox}>
-                                <View style={[styles.statIcon, { backgroundColor: '#2196F320' }]}>
-                                    <BarChart3 color="#2196F3" size={20} />
-                                </View>
-                                <Text style={styles.statVal}>{((stats.completed / (stats.totalAppointments || 1)) * 100).toFixed(0)}%</Text>
-                                <Text style={styles.statLab}>Success Rate</Text>
-                            </LinearGradient>
-
-                            <LinearGradient colors={['#1a1a1a', '#0f0f0f']} style={styles.statBox}>
-                                <View style={[styles.statIcon, { backgroundColor: '#FF980020' }]}>
-                                    <Users color="#FF9800" size={20} />
-                                </View>
-                                <Text style={styles.statVal}>${(stats.averageTicketSize || 0).toFixed(0)}</Text>
-                                <Text style={styles.statLab}>Avg Ticket</Text>
-                            </LinearGradient>
-                        </ScrollView>
+                                <LinearGradient colors={['#1a1a1a', '#0a0a0a']} style={styles.smallStatCard}>
+                                    <View style={[styles.statIcon, { backgroundColor: '#9C27B020' }]}>
+                                        <Users color="#9C27B0" size={18} />
+                                    </View>
+                                    <Text style={styles.smallStatVal}>{((stats.completed / (stats.totalAppointments || 1)) * 100).toFixed(0)}%</Text>
+                                    <Text style={styles.smallStatLab}>Success Rate</Text>
+                                </LinearGradient>
+                            </View>
+                        </View>
                     </View>
                 )}
-                <View style={styles.managementSection}>
-                    <Text style={styles.sectionTitle}>Quick Actions</Text>
-                    <View style={styles.mgmtGrid}>
-                        <TouchableOpacity
-                            style={styles.mgmtCard}
-                            onPress={() => navigation.navigate('Services')}
-                        >
-                            <View style={[styles.iconBox, { backgroundColor: COLORS.primary + '15' }]}>
-                                <Package color={COLORS.primary} size={28} />
-                            </View>
-                            <Text style={styles.mgmtCardTitle}>Services</Text>
-                            <Text style={styles.mgmtCardSub}>CRUD Packages</Text>
-                        </TouchableOpacity>
 
-                        <TouchableOpacity
-                            style={styles.mgmtCard}
-                            onPress={() => navigation.navigate('Users')}
-                        >
-                            <View style={[styles.iconBox, { backgroundColor: '#4CAF5015' }]}>
-                                <Users color="#4CAF50" size={28} />
-                            </View>
-                            <Text style={styles.mgmtCardTitle}>Users</Text>
-                            <Text style={styles.mgmtCardSub}>Manage Roles</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.mgmtCard}
-                            onPress={() => navigation.navigate('ChatList')}
-                        >
-                            <View style={[styles.iconBox, { backgroundColor: '#9C27B015' }]}>
-                                <MessageSquare color="#9C27B0" size={28} />
-                            </View>
-                            <Text style={styles.mgmtCardTitle}>Messages</Text>
-                            <Text style={styles.mgmtCardSub}>Client Support</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.mgmtCard}
-                            onPress={() => navigation.navigate('ManageStyles')}
-                        >
-                            <View style={[styles.iconBox, { backgroundColor: '#E91E6315' }]}>
-                                <Scissors color="#E91E63" size={28} />
-                            </View>
-                            <Text style={styles.mgmtCardTitle}>Styles</Text>
-                            <Text style={styles.mgmtCardSub}>Hair Designs</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.mgmtCard}
-                            onPress={() => navigation.navigate('ManageCategories')}
-                        >
-                            <View style={[styles.iconBox, { backgroundColor: '#FF980015' }]}>
-                                <Scissors color="#FF9800" size={28} />
-                            </View>
-                            <Text style={styles.mgmtCardTitle}>Categories</Text>
-                            <Text style={styles.mgmtCardSub}>Style Filters</Text>
+                <View style={styles.appointmentsSection}>
+                    <View style={styles.sectionHeaderRow}>
+                        <Text style={styles.sectionTitle}>Recent Bookings</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('AdminBookings')}>
+                            <Text style={styles.viewAllText}>View All</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
 
-                <View style={styles.appointmentsHeader}>
-                    <Text style={styles.sectionTitle}>Recent Bookings</Text>
-                </View>
-
-                <View style={styles.list}>
-                    {appointments.map(item => (
-                        <View key={item.id} style={styles.card}>
-                            <View style={styles.cardTop}>
-                                <View style={styles.userInitial}>
-                                    <Text style={styles.initialText}>{(item.userName || 'C')[0].toUpperCase()}</Text>
+                    <View style={styles.list}>
+                        {appointments.map(item => (
+                            <View key={item.id} style={styles.card}>
+                                <View style={styles.cardTop}>
+                                    <View style={styles.userInitial}>
+                                        <Text style={styles.initialText}>{(item.userName || item.userEmail || 'C')[0].toUpperCase()}</Text>
+                                    </View>
+                                    <View style={styles.cardInfo}>
+                                        <Text style={styles.userName} numberOfLines={1}>{item.userName || item.userEmail || 'Customer'}</Text>
+                                        <Text style={styles.serviceName}>{item.item?.name || item.service || 'Grooming Service'}</Text>
+                                    </View>
+                                    <StatusBadge status={item.status} />
                                 </View>
-                                <View style={styles.cardInfo}>
-                                    <Text style={styles.userName}>{item.userEmail || item.userName || 'Customer'}</Text>
-                                    <Text style={styles.serviceName}>{item.item?.name || item.service || 'Grooming Service'}</Text>
-                                </View>
-                                <StatusBadge status={item.status} />
-                            </View>
 
-                            <View style={styles.separator} />
-
-                            <View style={styles.cardDetails}>
-                                <View style={styles.detailItem}>
-                                    <Calendar color={COLORS.textSecondary} size={14} />
-                                    <Text style={styles.detailText}>{item.date}</Text>
+                                <View style={styles.cardDetails}>
+                                    <View style={styles.detailItem}>
+                                        <Calendar color={COLORS.textSecondary} size={14} />
+                                        <Text style={styles.detailText}>{item.date}</Text>
+                                    </View>
+                                    <View style={styles.detailItem}>
+                                        <Clock color={COLORS.textSecondary} size={14} />
+                                        <Text style={styles.detailText}>{item.time}</Text>
+                                    </View>
+                                    {item.barberName && (
+                                        <View style={styles.detailItem}>
+                                            <Scissors color={COLORS.textSecondary} size={14} />
+                                            <Text style={styles.detailText}>{item.barberName}</Text>
+                                        </View>
+                                    )}
                                 </View>
-                                <View style={styles.detailItem}>
-                                    <Clock color={COLORS.textSecondary} size={14} />
-                                    <Text style={styles.detailText}>{item.time}</Text>
-                                </View>
-                            </View>
 
-                            {/* Actions for ALL statuses */}
-                            <View style={styles.actions}>
-                                {item.status === 'pending' && (
+                                <View style={styles.actions}>
+                                    {item.status === 'pending' && (
+                                        <TouchableOpacity
+                                            style={[styles.actionBtn, styles.approveBtn]}
+                                            onPress={() => {
+                                                setSelectedAppointmentId(item.id);
+                                                setAssignModalVisible(true);
+                                            }}
+                                        >
+                                            <UserPlus color="#fff" size={18} />
+                                            <Text style={styles.actionBtnText}>Assign</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                    {item.status === 'pending' && (
+                                        <TouchableOpacity
+                                            style={[styles.actionBtn, styles.cancelBtn]}
+                                            onPress={() => handleStatusUpdate(item.id, 'cancelled')}
+                                        >
+                                            <XCircle color="#fff" size={18} />
+                                            <Text style={styles.actionBtnText}>Cancel</Text>
+                                        </TouchableOpacity>
+                                    )}
                                     <TouchableOpacity
-                                        style={[styles.actionBtn, styles.approveBtn]}
-                                        onPress={() => {
-                                            setSelectedAppointmentId(item.id);
-                                            setAssignModalVisible(true);
-                                        }}
+                                        style={[styles.actionBtn, styles.deleteBtn]}
+                                        onPress={() => handleDeleteAppointment(item.id)}
                                     >
-                                        <UserPlus color="#fff" size={18} />
-                                        <Text style={styles.actionBtnText}>Assign</Text>
+                                        <Trash2 color="#fff" size={18} />
+                                        <Text style={styles.actionBtnText}>Delete</Text>
                                     </TouchableOpacity>
-                                )}
-                                {item.status === 'pending' && (
-                                    <TouchableOpacity
-                                        style={[styles.actionBtn, styles.cancelBtn]}
-                                        onPress={() => handleStatusUpdate(item.id, 'cancelled')}
-                                    >
-                                        <XCircle color="#fff" size={18} />
-                                        <Text style={styles.actionBtnText}>Cancel</Text>
-                                    </TouchableOpacity>
-                                )}
-                                <TouchableOpacity
-                                    style={[styles.actionBtn, { backgroundColor: '#F44336', borderColor: '#F44336' }]}
-                                    onPress={() => handleDeleteAppointment(item.id)}
-                                >
-                                    <Trash2 color="#fff" size={18} />
-                                    <Text style={styles.actionBtnText}>Delete</Text>
-                                </TouchableOpacity>
+                                </View>
                             </View>
-                        </View>
-                    ))}
-                    {appointments.length === 0 && !loading && (
-                        <View style={styles.emptyState}>
-                            <Scissors color={COLORS.textSecondary} size={48} style={{ opacity: 0.3 }} />
-                            <Text style={styles.emptyText}>No appointments today.</Text>
-                        </View>
-                    )}
+                        ))}
+                        {appointments.length === 0 && !loading && (
+                            <View style={styles.emptyState}>
+                                <View style={styles.emptyIconBox}>
+                                    <Scissors color={COLORS.textSecondary} size={48} style={{ opacity: 0.3 }} />
+                                </View>
+                                <Text style={styles.emptyText}>No appointments today.</Text>
+                            </View>
+                        )}
+                    </View>
                 </View>
             </ScrollView>
 
@@ -400,17 +330,6 @@ export default function AdminDashboard({ navigation }) {
     );
 }
 
-const StatusBadge = ({ status }) => {
-    const bgColor = status === 'completed' ? '#4CAF5020' : status === 'pending' ? '#FFC10720' : '#F4433620';
-    const textColor = status === 'completed' ? '#4CAF50' : status === 'pending' ? '#FFC107' : '#F44336';
-
-    return (
-        <View style={[styles.badge, { backgroundColor: bgColor }]}>
-            <Text style={[styles.badgeText, { color: textColor }]}>{status.toUpperCase()}</Text>
-        </View>
-    );
-};
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -427,6 +346,56 @@ const styles = StyleSheet.create({
     headerGradient: {
         paddingBottom: 0,
     },
+    adminProfile: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    adminAvatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        backgroundColor: COLORS.primary + '20',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    adminName: {
+        color: COLORS.text,
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    adminRole: {
+        color: COLORS.primary,
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    headerActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    actionCircle: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: COLORS.card,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    unreadDot: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: COLORS.primary,
+        borderWidth: 2,
+        borderColor: COLORS.card,
+    },
     title: {
         fontSize: 32,
         fontWeight: 'bold',
@@ -439,110 +408,111 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
         letterSpacing: 2,
     },
+    scrollContent: {
+        paddingBottom: 100,
+    },
     analyticsSection: {
-        paddingTop: 24,
-        paddingBottom: 8,
-    },
-    statsScroll: {
-        paddingHorizontal: 24,
-        gap: 16,
-    },
-    statBox: {
-        width: 140,
-        padding: 16,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#333',
-    },
-    statIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    statVal: {
-        color: COLORS.text,
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    statLab: {
-        color: COLORS.textSecondary,
-        fontSize: 11,
-        marginTop: 4,
-        fontWeight: '500',
-    },
-    refreshBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: COLORS.card,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#333',
-    },
-    managementSection: {
         padding: 24,
     },
-    mgmtGrid: {
+    sectionHeaderRow: {
         flexDirection: 'row',
-        gap: 16,
-    },
-    mgmtCard: {
-        flex: 1,
-        backgroundColor: COLORS.card,
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: '#333',
+        justifyContent: 'space-between',
         alignItems: 'center',
-    },
-    mgmtCardTitle: {
-        color: COLORS.text,
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginTop: 12,
-    },
-    mgmtCardSub: {
-        color: COLORS.textSecondary,
-        fontSize: 12,
-        marginTop: 4,
-    },
-    iconBox: {
-        width: 60,
-        height: 60,
-        borderRadius: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
+        marginBottom: 16,
     },
     sectionTitle: {
         color: COLORS.text,
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 20,
     },
-    appointmentsHeader: {
+    statsGrid: {
+        flexDirection: 'row',
+        gap: 12,
+        height: 180,
+    },
+    mainStatCard: {
+        flex: 1.5,
+        borderRadius: 24,
+        padding: 20,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    statHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    statIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    trendBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#4CAF5015',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+        gap: 4,
+    },
+    trendText: {
+        color: '#4CAF50',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    mainStatVal: {
+        color: COLORS.text,
+        fontSize: 28,
+        fontWeight: 'bold',
+    },
+    mainStatLab: {
+        color: COLORS.textSecondary,
+        fontSize: 11,
+    },
+    sideStats: {
+        flex: 1,
+        gap: 12,
+    },
+    smallStatCard: {
+        flex: 1,
+        borderRadius: 20,
+        padding: 16,
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    smallStatVal: {
+        color: COLORS.text,
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 8,
+    },
+    smallStatLab: {
+        color: COLORS.textSecondary,
+        fontSize: 10,
+    },
+    appointmentsSection: {
         paddingHorizontal: 24,
-        marginTop: 10,
+    },
+    viewAllText: {
+        color: COLORS.primary,
+        fontSize: 14,
+        fontWeight: '600',
     },
     list: {
-        padding: 24,
-        paddingTop: 0,
+        marginTop: 8,
     },
     card: {
         backgroundColor: COLORS.card,
-        borderRadius: 20,
-        padding: 20,
+        borderRadius: 24,
+        padding: 16,
         marginBottom: 16,
         borderWidth: 1,
         borderColor: '#333',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
     },
     cardTop: {
         flexDirection: 'row',
@@ -550,41 +520,40 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     userInitial: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: COLORS.primary + '20',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: 12,
     },
     initialText: {
         color: COLORS.primary,
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
     },
     cardInfo: {
         flex: 1,
     },
     userName: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
         color: COLORS.text,
     },
     serviceName: {
-        fontSize: 14,
+        fontSize: 13,
         color: COLORS.textSecondary,
         marginTop: 2,
     },
-    separator: {
-        height: 1,
-        backgroundColor: '#333',
-        marginVertical: 12,
-    },
     cardDetails: {
         flexDirection: 'row',
-        gap: 20,
+        flexWrap: 'wrap',
+        gap: 16,
         marginBottom: 16,
+        backgroundColor: COLORS.background,
+        padding: 12,
+        borderRadius: 16,
     },
     detailItem: {
         flexDirection: 'row',
@@ -593,30 +562,20 @@ const styles = StyleSheet.create({
     },
     detailText: {
         color: COLORS.textSecondary,
-        fontSize: 14,
-    },
-    badge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 8,
-    },
-    badgeText: {
-        fontSize: 11,
-        fontWeight: 'bold',
+        fontSize: 12,
     },
     actions: {
         flexDirection: 'row',
-        gap: 12,
-        marginTop: 8,
+        gap: 8,
     },
     actionBtn: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 12,
+        paddingVertical: 10,
         borderRadius: 12,
-        gap: 8,
+        gap: 6,
     },
     approveBtn: {
         backgroundColor: '#4CAF50',
@@ -624,20 +583,35 @@ const styles = StyleSheet.create({
     cancelBtn: {
         backgroundColor: '#F44336',
     },
+    deleteBtn: {
+        backgroundColor: '#333',
+        borderWidth: 1,
+        borderColor: '#444',
+    },
     actionBtnText: {
         color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 14,
+        fontWeight: '700',
+        fontSize: 13,
     },
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 60,
-        gap: 16,
+        marginTop: 40,
+        gap: 12,
+    },
+    emptyIconBox: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: COLORS.card,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#333',
     },
     emptyText: {
         color: COLORS.textSecondary,
-        fontSize: 16,
+        fontSize: 14,
     },
     centered: {
         flex: 1,
@@ -647,26 +621,27 @@ const styles = StyleSheet.create({
     },
     modalBg: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.85)',
         justifyContent: 'flex-end',
     },
     modalContainer: {
         backgroundColor: COLORS.card,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
         padding: 24,
-        minHeight: '50%',
         maxHeight: '80%',
+        borderWidth: 1,
+        borderColor: '#333',
     },
     modalHeaderRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     modalTitle: {
         color: COLORS.text,
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: 'bold',
     },
     barberSelectBtn: {
@@ -674,7 +649,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: COLORS.background,
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 20,
         marginBottom: 12,
         borderWidth: 1,
         borderColor: '#333',
@@ -684,5 +659,14 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         fontSize: 16,
         fontWeight: '600',
+    },
+    badge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    badgeText: {
+        fontSize: 10,
+        fontWeight: 'bold',
     },
 });

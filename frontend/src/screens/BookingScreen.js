@@ -44,10 +44,10 @@ export default function BookingScreen({ route, navigation }) {
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.container}>
             <LinearGradient
                 colors={[COLORS.primary + '20', COLORS.background]}
-                style={styles.headerGradient}
+                style={[styles.headerGradient, { paddingTop: insets.top }]}
             >
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

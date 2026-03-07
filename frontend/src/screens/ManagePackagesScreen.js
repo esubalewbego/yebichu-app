@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { getPackages, createPackage, updatePackage, deletePackage, uploadImage } from '../services/api';
@@ -10,6 +10,7 @@ import CustomButton from '../components/Button';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ManagePackagesScreen() {
+    const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const [packages, setPackages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -25,6 +26,7 @@ export default function ManagePackagesScreen() {
     const [editingPackage, setEditingPackage] = useState(null);
     const [formData, setFormData] = useState({ name: '', price: '', description: '', duration: '', image: '' });
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchPackages();
@@ -40,6 +42,11 @@ export default function ManagePackagesScreen() {
             setLoading(false);
         }
     };
+
+    const filteredPackages = packages.filter(pkg =>
+        pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pkg.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const handleSave = async () => {
         if (!formData.name || !formData.price) {
@@ -80,10 +87,14 @@ export default function ManagePackagesScreen() {
         setUploadingImage(true);
         try {
             const formDataToUpload = new FormData();
+            const filename = asset.uri.split('/').pop();
+            const match = /\.(\w+)$/.exec(filename);
+            const type = match ? `image/${match[1]}` : `image/jpeg`;
+
             formDataToUpload.append('image', {
-                uri: asset.uri,
-                type: 'image/jpeg',
-                name: 'upload.jpg',
+                uri: Platform.OS === 'ios' ? asset.uri.replace('file://', '') : asset.uri,
+                type: type,
+                name: filename || 'upload.jpg',
             });
             const { data } = await uploadImage(formDataToUpload);
             setFormData(prev => ({ ...prev, image: data.url }));
@@ -124,47 +135,87 @@ export default function ManagePackagesScreen() {
 
     const renderItem = ({ item }) => (
         <View style={styles.card}>
-            <View style={styles.cardIconBox}>
-                <Package color={COLORS.primary} size={24} />
-            </View>
-            <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                <View style={styles.priceRow}>
-                    <Text style={styles.price}>${item.price}</Text>
-                    {item.duration && (
-                        <View style={styles.durationTag}>
-                            <Clock color={COLORS.textSecondary} size={12} />
-                            <Text style={styles.durationText}>{item.duration}</Text>
+            <View style={styles.cardContent}>
+                <View style={styles.cardVisual}>
+                    {item.image ? (
+                        <Image source={{ uri: item.image }} style={styles.cardImg} />
+                    ) : (
+                        <View style={styles.cardIconBox}>
+                            <Package color={COLORS.primary} size={28} />
                         </View>
                     )}
+                    <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.8)']}
+                        style={styles.cardImgOverlay}
+                    >
+                        <View style={styles.cardBadge}>
+                            <Text style={styles.cardBadgeText}>${item.price}</Text>
+                        </View>
+                    </LinearGradient>
                 </View>
-                <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
-            </View>
-            <View style={styles.actions}>
-                <TouchableOpacity onPress={() => openModal(item)} style={[styles.actionBtn, styles.editBtn]}>
-                    <Edit3 color={COLORS.primary} size={18} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(item.id)} style={[styles.actionBtn, styles.deleteBtn]}>
-                    <Trash2 color="#F44336" size={18} />
-                </TouchableOpacity>
+
+                <View style={styles.cardInfo}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <View style={styles.metaRow}>
+                        {item.duration && (
+                            <View style={styles.metaItem}>
+                                <Clock color={COLORS.textSecondary} size={12} />
+                                <Text style={styles.metaText}>{item.duration}</Text>
+                            </View>
+                        )}
+                        <View style={styles.metaItem}>
+                            <DollarSign color={COLORS.primary} size={12} />
+                            <Text style={[styles.metaText, { color: COLORS.primary, fontWeight: 'bold' }]}>PRO</Text>
+                        </View>
+                    </View>
+                    <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
+
+                    <View style={styles.cardActions}>
+                        <TouchableOpacity onPress={() => openModal(item)} style={[styles.actionBtn, styles.editBtn]}>
+                            <Edit3 color={COLORS.primary} size={16} />
+                            <Text style={styles.editBtnText}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDelete(item.id)} style={[styles.actionBtn, styles.deleteBtn]}>
+                            <Trash2 color="#F44336" size={16} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </View>
         </View>
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <LinearGradient
                 colors={[COLORS.primary + '20', COLORS.background]}
-                style={styles.headerGradient}
+                style={[styles.headerGradient, { paddingTop: insets.top }]}
             >
                 <View style={styles.header}>
                     <View>
                         <Text style={styles.title}>Services</Text>
-                        <Text style={styles.subtitle}>Package Management</Text>
+                        <Text style={styles.subtitle}>{packages.length} Packages Available</Text>
                     </View>
                     <TouchableOpacity style={styles.addBtn} onPress={() => openModal()}>
-                        <Plus color={COLORS.background} size={24} />
+                        <Plus color="#000" size={24} />
                     </TouchableOpacity>
+                </View>
+
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchBar}>
+                        <Package color={COLORS.textSecondary} size={20} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search services..."
+                            placeholderTextColor="#666"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
+                        {searchQuery !== '' && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                <X color={COLORS.textSecondary} size={20} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
             </LinearGradient>
 
@@ -174,15 +225,19 @@ export default function ManagePackagesScreen() {
                 </View>
             ) : (
                 <FlatList
-                    data={packages}
+                    data={filteredPackages}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
-                    contentContainerStyle={styles.list}
+                    contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
-                            <Package color={COLORS.textSecondary} size={48} style={{ opacity: 0.3 }} />
-                            <Text style={styles.emptyText}>No services added yet.</Text>
+                            <View style={styles.emptyIconBox}>
+                                <Package color={COLORS.textSecondary} size={48} style={{ opacity: 0.3 }} />
+                            </View>
+                            <Text style={styles.emptyText}>
+                                {searchQuery ? 'No results found for your search.' : 'No services added yet.'}
+                            </Text>
                         </View>
                     }
                 />
@@ -206,7 +261,7 @@ export default function ManagePackagesScreen() {
 
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={styles.inputContainer}>
-                                <Text style={styles.inputLabel}>Package Image</Text>
+                                <Text style={styles.inputLabel}>Visual Branding</Text>
                                 <TouchableOpacity style={styles.imageUploadBox} onPress={pickImage} disabled={uploadingImage}>
                                     {uploadingImage ? (
                                         <ActivityIndicator size="small" color={COLORS.primary} />
@@ -215,45 +270,44 @@ export default function ManagePackagesScreen() {
                                     ) : (
                                         <View style={styles.imagePlaceholder}>
                                             <ImageIcon color={COLORS.textSecondary} size={28} />
-                                            <Text style={styles.imagePlaceholderText}>Tap to select an image</Text>
+                                            <Text style={styles.imagePlaceholderText}>Tap to select showcase image</Text>
                                         </View>
                                     )}
                                 </TouchableOpacity>
                             </View>
 
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.inputLabel}>Name</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Package color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="e.g. Wedding Package"
-                                        placeholderTextColor="#666"
-                                        value={formData.name}
-                                        onChangeText={text => setFormData({ ...formData, name: text })}
-                                    />
+                            <View style={styles.row}>
+                                <View style={[styles.inputContainer, { flex: 2 }]}>
+                                    <Text style={styles.inputLabel}>Package Name</Text>
+                                    <View style={styles.inputWrapper}>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="e.g. Wedding Package"
+                                            placeholderTextColor="#666"
+                                            value={formData.name}
+                                            onChangeText={text => setFormData({ ...formData, name: text })}
+                                        />
+                                    </View>
+                                </View>
+                                <View style={[styles.inputContainer, { flex: 1, marginLeft: 12 }]}>
+                                    <Text style={styles.inputLabel}>Price</Text>
+                                    <View style={styles.inputWrapper}>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="0.00"
+                                            placeholderTextColor="#666"
+                                            value={formData.price}
+                                            onChangeText={text => setFormData({ ...formData, price: text })}
+                                            keyboardType="numeric"
+                                        />
+                                    </View>
                                 </View>
                             </View>
 
                             <View style={styles.inputContainer}>
-                                <Text style={styles.inputLabel}>Price ($)</Text>
+                                <Text style={styles.inputLabel}>Expected Duration</Text>
                                 <View style={styles.inputWrapper}>
-                                    <DollarSign color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="0.00"
-                                        placeholderTextColor="#666"
-                                        value={formData.price}
-                                        onChangeText={text => setFormData({ ...formData, price: text })}
-                                        keyboardType="numeric"
-                                    />
-                                </View>
-                            </View>
-
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.inputLabel}>Duration</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Clock color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
+                                    <Clock color={COLORS.textSecondary} size={18} style={styles.inputIcon} />
                                     <TextInput
                                         style={styles.input}
                                         placeholder="e.g. 45 min"
@@ -267,10 +321,9 @@ export default function ManagePackagesScreen() {
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>Description</Text>
                                 <View style={[styles.inputWrapper, { alignItems: 'flex-start', paddingTop: 12 }]}>
-                                    <AlignLeft color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
                                     <TextInput
                                         style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-                                        placeholder="Describe the service..."
+                                        placeholder="Describe what's included in this service..."
                                         placeholderTextColor="#666"
                                         value={formData.description}
                                         onChangeText={text => setFormData({ ...formData, description: text })}
@@ -280,27 +333,35 @@ export default function ManagePackagesScreen() {
                             </View>
 
                             <View style={styles.modalFooter}>
-                                <CustomButton title={editingPackage ? "Update Service" : "Create Service"} onPress={handleSave} />
+                                <CustomButton
+                                    title={editingPackage ? "Update Service" : "Create Service"}
+                                    onPress={handleSave}
+                                    loading={loading}
+                                />
                             </View>
                         </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: COLORS.background,
+    },
+    headerGradient: {
+        paddingBottom: 24,
+    },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 24,
         paddingTop: 10,
-        paddingBottom: 30,
-    },
-    headerGradient: {
-        paddingBottom: 0,
+        paddingBottom: 20,
     },
     title: {
         fontSize: 32,
@@ -312,13 +373,14 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         fontWeight: '600',
         textTransform: 'uppercase',
-        letterSpacing: 2,
+        letterSpacing: 1,
+        marginTop: 4,
     },
     addBtn: {
         backgroundColor: COLORS.primary,
-        width: 52,
-        height: 52,
-        borderRadius: 16,
+        width: 48,
+        height: 48,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 4,
@@ -327,111 +389,161 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
     },
+    searchContainer: {
+        paddingHorizontal: 24,
+    },
+    searchBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.card,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        height: 50,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    searchInput: {
+        flex: 1,
+        color: COLORS.text,
+        fontSize: 15,
+        marginLeft: 12,
+    },
     list: {
         padding: 24,
         paddingTop: 0,
+        paddingBottom: 100,
     },
     card: {
         backgroundColor: COLORS.card,
-        borderRadius: 20,
-        padding: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
+        borderRadius: 24,
+        marginBottom: 20,
+        overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#333',
+    },
+    cardContent: {
+        flexDirection: 'row',
+    },
+    cardVisual: {
+        width: 120,
+        height: '100%',
+        backgroundColor: '#222',
+        position: 'relative',
+    },
+    cardImg: {
+        width: '100%',
+        height: '100%',
+    },
+    cardImgOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '60%',
+        justifyContent: 'flex-end',
+        padding: 8,
+    },
+    cardBadge: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+        alignSelf: 'flex-start',
+    },
+    cardBadgeText: {
+        color: '#000',
+        fontSize: 12,
+        fontWeight: 'bold',
     },
     cardIconBox: {
-        width: 52,
-        height: 52,
-        borderRadius: 14,
-        backgroundColor: COLORS.background,
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
-        borderWidth: 1,
-        borderColor: '#333',
+        opacity: 0.5,
     },
-    info: {
+    cardInfo: {
         flex: 1,
+        padding: 16,
     },
     name: {
         color: COLORS.text,
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: 'bold',
     },
-    priceRow: {
+    metaRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-        marginTop: 4,
+        marginTop: 6,
     },
-    price: {
-        color: COLORS.primary,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    durationTag: {
+    metaItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#333',
+        backgroundColor: '#1a1a1a',
         paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
+        paddingVertical: 4,
+        borderRadius: 8,
     },
-    durationText: {
+    metaText: {
         color: COLORS.textSecondary,
         fontSize: 11,
         fontWeight: '600',
     },
     desc: {
         color: COLORS.textSecondary,
-        fontSize: 12,
-        marginTop: 6,
-        lineHeight: 16,
+        fontSize: 13,
+        marginTop: 10,
+        lineHeight: 18,
     },
-    actions: {
+    cardActions: {
         flexDirection: 'row',
+        marginTop: 16,
         gap: 8,
-        marginLeft: 12,
     },
     actionBtn: {
-        width: 38,
-        height: 38,
+        paddingVertical: 8,
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
     },
     editBtn: {
-        borderColor: COLORS.primary + '40',
+        flex: 1,
+        flexDirection: 'row',
+        gap: 6,
+        borderColor: COLORS.primary + '30',
         backgroundColor: COLORS.primary + '10',
     },
+    editBtnText: {
+        color: COLORS.primary,
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
     deleteBtn: {
-        borderColor: '#F4433640',
+        width: 40,
+        borderColor: '#F4433630',
         backgroundColor: '#F4433610',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.85)',
+        backgroundColor: 'rgba(0,0,0,0.9)',
         justifyContent: 'flex-end',
     },
     modalContent: {
         backgroundColor: COLORS.card,
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
         padding: 24,
         maxHeight: '90%',
         borderWidth: 1,
         borderColor: '#333',
-        borderBottomWidth: 0,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 30,
+        marginBottom: 24,
     },
     modalTitle: {
         color: COLORS.text,
@@ -456,10 +568,14 @@ const styles = StyleSheet.create({
     inputContainer: {
         marginBottom: 20,
     },
+    row: {
+        flexDirection: 'row',
+        marginBottom: 0,
+    },
     inputLabel: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-        fontWeight: '600',
+        color: COLORS.text,
+        fontSize: 15,
+        fontWeight: 'bold',
         marginBottom: 8,
         marginLeft: 4,
     },
@@ -469,11 +585,11 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.background,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#444',
+        borderColor: '#333',
         paddingHorizontal: 16,
     },
     inputIcon: {
-        marginRight: 12,
+        marginRight: 10,
     },
     input: {
         flex: 1,
@@ -483,11 +599,11 @@ const styles = StyleSheet.create({
     },
     imageUploadBox: {
         width: '100%',
-        height: 150,
+        height: 180,
         backgroundColor: COLORS.background,
-        borderRadius: 16,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#444',
+        borderColor: '#333',
         borderStyle: 'dashed',
         justifyContent: 'center',
         alignItems: 'center',
@@ -507,8 +623,8 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     modalFooter: {
-        marginTop: 10,
-        marginBottom: 30,
+        marginTop: 20,
+        marginBottom: 40,
     },
     centered: {
         flex: 1,
@@ -518,11 +634,22 @@ const styles = StyleSheet.create({
     emptyContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 100,
+        marginTop: 60,
         gap: 16,
+    },
+    emptyIconBox: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: COLORS.card,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#333',
     },
     emptyText: {
         color: COLORS.textSecondary,
         fontSize: 16,
+        textAlign: 'center',
     },
 });

@@ -91,6 +91,13 @@ export default function ChatListScreen({ navigation }) {
     const renderItem = ({ item }) => {
         const participant = item.otherParticipant || { name: 'Chat', email: '' };
 
+        const formatTime = (timestamp) => {
+            if (!timestamp) return '';
+            const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+            if (isNaN(date)) return '';
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        };
+
         return (
             <TouchableOpacity
                 style={styles.convoCard}
@@ -109,7 +116,7 @@ export default function ChatListScreen({ navigation }) {
                     <Text style={styles.lastMsg} numberOfLines={1}>{item.lastMessage || 'No messages yet'}</Text>
                 </View>
                 <View style={styles.convoMeta}>
-                    <Text style={styles.timeText}>{item.lastUpdate ? new Date(item.lastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</Text>
+                    <Text style={styles.timeText}>{formatTime(item.lastUpdate)}</Text>
                     <ChevronRight color={COLORS.textSecondary} size={20} />
                 </View>
             </TouchableOpacity>

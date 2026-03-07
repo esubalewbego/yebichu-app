@@ -42,7 +42,7 @@ export default function SignupScreen({ navigation }) {
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.container}>
             <LinearGradient
                 colors={[COLORS.background, COLORS.primary + '05', COLORS.background]}
                 style={StyleSheet.absoluteFill}
@@ -62,7 +62,10 @@ export default function SignupScreen({ navigation }) {
             >
                 <ScrollView
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scroll}
+                    contentContainerStyle={[
+                        styles.scroll,
+                        { paddingBottom: insets.bottom + 40 }
+                    ]}
                 >
                     <View style={styles.introSection}>
                         <Text style={styles.welcomeText}>Join Yebichu</Text>
@@ -166,7 +169,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: 10,
         paddingBottom: 20,
     },
     backBtn: {

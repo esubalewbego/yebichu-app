@@ -6,20 +6,25 @@ import AdminDashboard from '../screens/AdminDashboard';
 import BarberDashboard from '../screens/BarberDashboard';
 import BarberHistoryScreen from '../screens/BarberHistoryScreen';
 import ManagePackagesScreen from '../screens/ManagePackagesScreen';
+import ManageStylesScreen from '../screens/ManageStylesScreen';
 import ManageUsersScreen from '../screens/ManageUsersScreen';
+import ManageCategoriesScreen from '../screens/ManageCategoriesScreen';
+import ManageMoreScreen from '../screens/ManageMoreScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ChatListScreen from '../screens/ChatListScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
-import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase, User, Users, MessageSquare, Heart } from 'lucide-react-native';
-import { View, ActivityIndicator } from 'react-native';
+import { Home, Clock, ShieldCheck, CalendarDays, Loader2, PackageSearch, Briefcase, User, Users, MessageSquare, Heart, Scissors, Menu } from 'lucide-react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
     const { user, loading } = useAuth();
     const role = user?.role?.toLowerCase();
+    const insets = useSafeAreaInsets();
 
     console.log('TabNavigator Rendering for role:', role);
 
@@ -38,12 +43,22 @@ export default function TabNavigator() {
                 tabBarStyle: {
                     backgroundColor: COLORS.card,
                     borderTopWidth: 0,
-                    height: 60,
-                    paddingBottom: 10,
-                    paddingTop: 10,
+                    height: 65 + (Platform.OS === 'ios' ? insets.bottom : insets.bottom > 20 ? insets.bottom - 10 : 0),
+                    paddingBottom: Platform.OS === 'ios' ? insets.bottom : insets.bottom > 20 ? insets.bottom : 12,
+                    paddingTop: 8,
+                    elevation: 10,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -4 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 10,
                 },
                 tabBarActiveTintColor: COLORS.primary,
                 tabBarInactiveTintColor: COLORS.textSecondary,
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontWeight: '600',
+                    marginTop: -4,
+                },
             }}
         >
             {role === 'user' && (
@@ -122,10 +137,10 @@ export default function TabNavigator() {
                         }}
                     />
                     <Tab.Screen
-                        name="Messages"
-                        component={ChatListScreen}
+                        name="Styles"
+                        component={ManageStylesScreen}
                         options={{
-                            tabBarIcon: ({ color }) => <MessageSquare color={color} size={24} />,
+                            tabBarIcon: ({ color }) => <Scissors color={color} size={24} />,
                         }}
                     />
                     <Tab.Screen
@@ -136,10 +151,17 @@ export default function TabNavigator() {
                         }}
                     />
                     <Tab.Screen
-                        name="Profile"
-                        component={ProfileScreen}
+                        name="Messages"
+                        component={ChatListScreen}
                         options={{
-                            tabBarIcon: ({ color }) => <User color={color} size={24} />,
+                            tabBarIcon: ({ color }) => <MessageSquare color={color} size={24} />,
+                        }}
+                    />
+                    <Tab.Screen
+                        name="More"
+                        component={ManageMoreScreen}
+                        options={{
+                            tabBarIcon: ({ color }) => <Menu color={color} size={24} />,
                         }}
                     />
                 </>
