@@ -47,7 +47,31 @@ export const getCategories = () => api.get('/packages/categories');
 export const createCategory = (data) => api.post('/packages/categories', data);
 export const updateCategory = (id, data) => api.put(`/packages/categories/${id}`, data);
 export const deleteCategory = (id) => api.delete(`/packages/categories/${id}`);
-export const uploadImage = (formData) => api.post('/upload', formData);
+export const uploadImage = async (formData) => {
+    try {
+        const token = await auth.currentUser?.getIdToken();
+        const response = await fetch(`${API_BASE_URL}/upload`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+                // Important: Do NOT set Content-Type header on FormData fetch
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `Upload failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        return { data };
+    } catch (error) {
+        console.error('Fetch Upload Error:', error);
+        throw error;
+    }
+};
 
 // Appointments
 export const createAppointment = (data) => api.post('/appointments', data);
