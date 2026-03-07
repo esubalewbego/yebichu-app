@@ -47,6 +47,7 @@ export default function HomeScreen({ navigation }) {
         try {
             const { data } = await apiToggleWishlist(id);
             setWishlist(data.wishlist);
+            updateUser({ wishlist: data.wishlist });
         } catch (error) {
             console.error('Wishlist toggle failed:', error);
         }

@@ -12,17 +12,17 @@ export default function FavoritesScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [wishlist, setWishlist] = useState(user?.wishlist || []);
+    const { updateUser } = useAuth();
 
     useEffect(() => {
         fetchFavorites();
-    }, [wishlist]);
+    }, [user?.wishlist]);
 
     const fetchFavorites = async () => {
         try {
             const [pkgs, sts] = await Promise.all([getPackages(), getStyles()]);
             const allItems = [...pkgs.data.map(p => ({ ...p, isPackage: true })), ...sts.data.map(s => ({ ...s, isPackage: false }))];
-            const filtered = allItems.filter(item => wishlist.includes(item.id));
+            const filtered = allItems.filter(item => user?.wishlist?.includes(item.id));
             setFavorites(filtered);
         } catch (error) {
             console.error('Failed to fetch favorites:', error);
@@ -34,7 +34,7 @@ export default function FavoritesScreen({ navigation }) {
     const handleWishlistToggle = async (id) => {
         try {
             const { data } = await apiToggleWishlist(id);
-            setWishlist(data.wishlist);
+            updateUser({ wishlist: data.wishlist });
         } catch (error) {
             console.error('Wishlist toggle failed:', error);
         }
