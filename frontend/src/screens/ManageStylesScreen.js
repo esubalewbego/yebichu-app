@@ -66,15 +66,26 @@ export default function ManageStylesScreen({ navigation }) {
     };
 
     const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+            return;
+        }
 
-        if (!result.canceled) {
-            uploadImageToBackend(result.assets[0]);
+        try {
+            let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (!result.canceled) {
+                await uploadImageToBackend(result.assets[0]);
+            }
+        } catch (error) {
+            console.error('Pick image error:', error);
+            Alert.alert('Error', 'Failed to open image gallery.');
         }
     };
 
