@@ -13,8 +13,46 @@ const getPackages = async (req, res) => {
 const getStyles = async (req, res) => {
     try {
         const stylesSnapshot = await db.collection('styles').get();
-        const styles = stylesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const styles = await Promise.all(stylesSnapshot.docs.map(async (doc) => {
+            const data = doc.data();
+            const ratingsSnapshot = await db.collection('styles').doc(doc.id).collection('ratings').get();
+            const ratings = ratingsSnapshot.docs.map(d => d.data().rating);
+
+            const ratingCount = ratings.length;
+            const avgRating = ratingCount > 0
+                ? (ratings.reduce((a, b) => a + b, 0) / ratingCount).toFixed(1)
+                : 0;
+
+            return {
+                id: doc.id,
+                ...data,
+                avgRating: Number(avgRating),
+                ratingCount
+            };
+        }));
         res.status(200).json(styles);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const rateStyle = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rating, userId } = req.body;
+
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ error: 'Invalid rating. Must be between 1 and 5.' });
+        }
+
+        // Store rating in a sub-collection
+        await db.collection('styles').doc(id).collection('ratings').doc(userId || 'anonymous').set({
+            rating,
+            userId: userId || 'anonymous',
+            timestamp: new Date().toISOString()
+        });
+
+        res.status(200).json({ message: 'Rating submitted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

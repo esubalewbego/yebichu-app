@@ -65,4 +65,7 @@ export const sendMessage = (data) => api.post('/chat/send', data);
 export const getConversations = () => api.get('/chat/conversations');
 export const getMessages = (conversationId) => api.get(`/chat/messages/${conversationId}`);
 
+// Ratings
+export const rateStyle = (id, data) => api.post(`/packages/styles/${id}/rate`, data);
+
 export default api;

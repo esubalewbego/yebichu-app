@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ScrollView, ActivityIndicator, RefreshControl, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
-import { getPackages, getStyles } from '../services/api';
+import { getPackages, getStyles, rateStyle } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart, Filter, MessageSquare } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,10 @@ export default function HomeScreen({ navigation }) {
     const [packages, setPackages] = useState([]);
     const [stylesData, setHairStyles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [ratingModalVisible, setRatingModalVisible] = useState(false);
+    const [selectedStyle, setSelectedStyle] = useState(null);
+    const [userRating, setUserRating] = useState(5);
+    const [submittingRating, setSubmittingRating] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -35,6 +39,26 @@ export default function HomeScreen({ navigation }) {
     const onRefresh = () => {
         setLoading(true);
         fetchData();
+    };
+
+    const handleRatePress = (style) => {
+        setSelectedStyle(style);
+        setRatingModalVisible(true);
+    };
+
+    const submitRating = async () => {
+        if (!selectedStyle) return;
+        setSubmittingRating(true);
+        try {
+            await rateStyle(selectedStyle.id, { rating: userRating, userId: user?.uid });
+            setRatingModalVisible(false);
+            fetchData(); // Refresh to show new average
+        } catch (error) {
+            console.error('Failed to submit rating:', error);
+            Alert.alert('Error', 'Failed to submit rating. Please try again.');
+        } finally {
+            setSubmittingRating(false);
+        }
     };
 
     const renderPackage = ({ item }) => (
@@ -81,10 +105,12 @@ export default function HomeScreen({ navigation }) {
             />
             <View style={styles.styleInfo}>
                 <Text style={styles.styleName}>{item.name}</Text>
-                <View style={styles.styleMeta}>
+                <TouchableOpacity style={styles.styleMeta} onPress={() => handleRatePress(item)}>
                     <Star color="#FFD700" size={12} fill="#FFD700" />
-                    <Text style={styles.styleRating}>Top Rated</Text>
-                </View>
+                    <Text style={styles.styleRating}>
+                        {item.avgRating ? `${item.avgRating} (${item.ratingCount || 0})` : 'No ratings'}
+                    </Text>
+                </TouchableOpacity>
                 <Text style={styles.stylePrice}>Starting from <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>${item.price}</Text></Text>
             </View>
             <View style={styles.styleAction}>
@@ -199,6 +225,47 @@ export default function HomeScreen({ navigation }) {
                     </>
                 )}
             </ScrollView>
+
+            <Modal visible={ratingModalVisible} transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.ratingModal}>
+                        <Text style={styles.modalTitle}>Rate This Style</Text>
+                        <Text style={styles.modalStyleName}>{selectedStyle?.name}</Text>
+
+                        <View style={styles.starsRow}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <TouchableOpacity key={star} onPress={() => setUserRating(star)}>
+                                    <Star
+                                        color={star <= userRating ? "#FFD700" : "#444"}
+                                        fill={star <= userRating ? "#FFD700" : "transparent"}
+                                        size={32}
+                                    />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={styles.cancelBtn}
+                                onPress={() => setRatingModalVisible(false)}
+                            >
+                                <Text style={styles.cancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.submitBtn, submittingRating && { opacity: 0.5 }]}
+                                onPress={submitRating}
+                                disabled={submittingRating}
+                            >
+                                {submittingRating ? (
+                                    <ActivityIndicator size="small" color="#000" />
+                                ) : (
+                                    <Text style={styles.submitText}>Submit</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -549,4 +616,63 @@ const styles = StyleSheet.create({
         padding: 50,
         alignItems: 'center',
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24
+    },
+    ratingModal: {
+        backgroundColor: COLORS.card,
+        width: '100%',
+        borderRadius: 24,
+        padding: 24,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#333'
+    },
+    modalTitle: {
+        color: COLORS.text,
+        fontSize: 20,
+        fontWeight: 'bold'
+    },
+    modalStyleName: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        marginTop: 4,
+        marginBottom: 24
+    },
+    starsRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 32
+    },
+    modalActions: {
+        flexDirection: 'row',
+        gap: 12
+    },
+    cancelBtn: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#444'
+    },
+    cancelText: {
+        color: COLORS.text,
+        fontWeight: '600'
+    },
+    submitBtn: {
+        flex: 1,
+        backgroundColor: COLORS.primary,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center'
+    },
+    submitText: {
+        color: '#000',
+        fontWeight: 'bold'
+    }
 });
