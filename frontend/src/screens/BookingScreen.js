@@ -61,7 +61,7 @@ export default function BookingScreen({ route, navigation }) {
             <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
                 <View style={styles.serviceCard}>
                     <Image
-                        source={{ uri: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300' }}
+                        source={{ uri: item.image || 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=300' }}
                         style={styles.serviceImage}
                     />
                     <View style={styles.serviceInfo}>
@@ -69,7 +69,9 @@ export default function BookingScreen({ route, navigation }) {
                         <Text style={styles.itemName}>{item.name}</Text>
                         <View style={styles.ratingRow}>
                             <Star color={COLORS.primary} size={14} fill={COLORS.primary} />
-                            <Text style={styles.ratingText}>4.9 (120+ reviews)</Text>
+                            <Text style={styles.ratingText}>
+                                {`${item.avgRating?.toFixed(1) || '0.0'} (${item.ratingCount || 0} reviews)`}
+                            </Text>
                         </View>
                         <Text style={styles.itemPrice}>${item.price}</Text>
                     </View>
