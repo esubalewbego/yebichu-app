@@ -92,6 +92,7 @@ export const getAdminInfo = () => api.get('/auth/admin-info');
 export const toggleWishlist = (id) => api.post('/auth/wishlist/toggle', { id });
 
 export const getBarbersList = () => api.get('/auth/barbers');
+export const updatePushToken = (uid, token) => api.patch(`/auth/profile/${uid}/push-token`, { token });
 
 // Admin User Management
 export const getAllUsers = () => api.get('/auth/users');

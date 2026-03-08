@@ -47,6 +47,27 @@ const getUserProfile = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+const updatePushToken = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ error: 'Token is required' });
+        }
+
+        await db.collection('users').doc(uid).update({
+            expoPushToken: token,
+            updatedAt: new Date().toISOString()
+        });
+
+        res.status(200).json({ message: 'Push token updated successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const getBarbers = async (req, res) => {
     try {
         const snapshot = await db.collection('users').where('role', '==', 'barber').get();
@@ -156,4 +177,4 @@ const loginWithIdentifier = async (req, res) => {
     }
 };
 
-module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist, loginWithIdentifier };
+module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist, loginWithIdentifier, updatePushToken };

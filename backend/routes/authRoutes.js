@@ -1,5 +1,5 @@
 const express = require('express');
-const { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist, loginWithIdentifier } = require('../controllers/authController');
+const { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist, loginWithIdentifier, updatePushToken } = require('../controllers/authController');
 const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -9,6 +9,7 @@ router.post('/login-identifier', loginWithIdentifier);
 router.get('/admin-info', authenticate, getAdminInfo);
 router.get('/barbers', authenticate, getBarbers);
 router.get('/profile/:userId', authenticate, getUserProfile);
+router.patch('/profile/:uid/push-token', authenticate, updatePushToken);
 
 // Admin routes for user management
 router.get('/users', authenticate, authorizeAdmin, getAllUsers);

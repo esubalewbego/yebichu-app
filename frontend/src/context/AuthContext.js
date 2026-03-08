@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { signup as apiSignup, getUserProfile } from '../services/api';
+import { signup as apiSignup, getUserProfile, updatePushToken } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../config/firebase';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'firebase/auth';
+import { registerForPushNotificationsAsync } from '../services/NotificationService';
 
 const AuthContext = createContext({});
 
@@ -25,6 +26,16 @@ export const AuthProvider = ({ children }) => {
                         role: data.role || 'user',
                         ...data
                     });
+
+                    // Capture and save Expo Push Token
+                    try {
+                        const token = await registerForPushNotificationsAsync();
+                        if (token) {
+                            await updatePushToken(firebaseUser.uid, token);
+                        }
+                    } catch (tokenError) {
+                        console.error('Failed to register push token:', tokenError);
+                    }
                 } else {
                     setUser(null);
                 }

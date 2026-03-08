@@ -1,4 +1,16 @@
 const { db } = require('../config/firebase');
+const { sendPushNotification } = require('../utils/pushNotifications');
+
+const getAdminTokens = async () => {
+    const snapshot = await db.collection('users').where('role', '==', 'admin').get();
+    return snapshot.docs.map(doc => doc.data().expoPushToken).filter(Boolean);
+};
+
+const getUserToken = async (uid) => {
+    if (!uid) return null;
+    const doc = await db.collection('users').doc(uid).get();
+    return doc.exists ? doc.data().expoPushToken : null;
+};
 
 const createAppointment = async (req, res) => {
     try {
@@ -34,6 +46,24 @@ const createAppointment = async (req, res) => {
         };
 
         const docRef = await db.collection('appointments').add(appointment);
+
+        // --- PUSH NOTIFICATIONS ---
+        try {
+            const adminTokens = await getAdminTokens();
+            if (adminTokens.length > 0) {
+                await sendPushNotification(adminTokens, 'New Booking!', `${userName} just booked an appointment.`);
+            }
+            if (barberId) {
+                const barberToken = await getUserToken(barberId);
+                if (barberToken) {
+                    await sendPushNotification(barberToken, 'New Booking Assigned!', `You have a new booking from ${userName}.`);
+                }
+            }
+        } catch (pushErr) {
+            console.error('Push notification error:', pushErr);
+        }
+        // --------------------------
+
         res.status(201).json({ id: docRef.id, ...appointment });
     } catch (error) {
         console.error('---- CREATE APPOINTMENT ERROR ----');
@@ -109,6 +139,20 @@ const updateAppointmentStatus = async (req, res) => {
         }
 
         await db.collection('appointments').doc(id).update(updateData);
+
+        // --- PUSH NOTIFICATIONS ---
+        try {
+            if (status === 'completed') {
+                const clientToken = await getUserToken(apptData.userId);
+                if (clientToken) {
+                    await sendPushNotification(clientToken, 'Appointment Completed', 'Thank you for your visit! Your appointment is now complete.');
+                }
+            }
+        } catch (pushErr) {
+            console.error('Push notification error:', pushErr);
+        }
+        // --------------------------
+
         res.status(200).json({ id, ...updateData });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -128,6 +172,25 @@ const assignBarber = async (req, res) => {
             barberId,
             status: 'assigned' // Auto-update status when a barber is assigned
         });
+
+        // --- PUSH NOTIFICATIONS ---
+        try {
+            const apptDoc = await db.collection('appointments').doc(id).get();
+            const apptData = apptDoc.data();
+
+            const barberToken = await getUserToken(barberId);
+            if (barberToken) {
+                await sendPushNotification(barberToken, 'New Assignment', `You have been assigned to an appointment for ${apptData.userName || 'a client'}.`);
+            }
+
+            const clientToken = await getUserToken(apptData.userId);
+            if (clientToken) {
+                await sendPushNotification(clientToken, 'Booking Update', 'Your booking has been assigned to a barber.');
+            }
+        } catch (pushErr) {
+            console.error('Push notification error:', pushErr);
+        }
+        // --------------------------
 
         res.status(200).json({ id, barberId, status: 'assigned' });
     } catch (error) {
@@ -202,6 +265,24 @@ const cancelAppointmentByUser = async (req, res) => {
         }
 
         await db.collection('appointments').doc(id).update({ status: 'cancelled' });
+
+        // --- PUSH NOTIFICATIONS ---
+        try {
+            const adminTokens = await getAdminTokens();
+            if (adminTokens.length > 0) {
+                await sendPushNotification(adminTokens, 'Booking Cancelled', `An appointment was cancelled by the client.`);
+            }
+            if (apptData.barberId) {
+                const barberToken = await getUserToken(apptData.barberId);
+                if (barberToken) {
+                    await sendPushNotification(barberToken, 'Appointment Cancelled', `An appointment assigned to you was cancelled.`);
+                }
+            }
+        } catch (pushErr) {
+            console.error('Push notification error:', pushErr);
+        }
+        // --------------------------
+
         res.status(200).json({ id, status: 'cancelled' });
     } catch (error) {
         res.status(500).json({ error: error.message });
