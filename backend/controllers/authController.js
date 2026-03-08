@@ -1,4 +1,5 @@
 const { auth, db } = require('../config/firebase');
+const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
 
 const signup = async (req, res) => {
     try {
@@ -21,6 +22,16 @@ const signup = async (req, res) => {
             displayName: fullName,
         });
 
+        // Handle optional profile image upload
+        let profileImageUrl = null;
+        if (req.file) {
+            try {
+                profileImageUrl = await uploadToCloudinary(req.file.buffer, 'yebichu_profiles');
+            } catch (imgErr) {
+                console.error('Failed to upload profile image during signup:', imgErr);
+            }
+        }
+
         // Save additional profile info in Firestore
         const userRole = 'user';
         await db.collection('users').doc(userRecord.uid).set({
@@ -28,11 +39,12 @@ const signup = async (req, res) => {
             username: username.toLowerCase(),
             email,
             role: userRole,
+            profileImageUrl,
             wishlist: [],
             createdAt: new Date().toISOString(),
         });
 
-        res.status(201).json({ uid: userRecord.uid, email, role: userRole });
+        res.status(201).json({ uid: userRecord.uid, email, role: userRole, profileImageUrl });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -43,6 +55,55 @@ const getUserProfile = async (req, res) => {
         const userDoc = await db.collection('users').doc(req.params.userId).get();
         if (!userDoc.exists) return res.status(404).json({ error: 'User not found' });
         res.status(200).json({ id: userDoc.id, ...userDoc.data() });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const updateUserProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { fullName, username, bio, phone } = req.body;
+
+        // Security Check: Users can only update their own profile unless they are an admin
+        if (req.user.uid !== userId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden: You can only update your own profile' });
+        }
+
+        const updateData = {};
+        if (fullName) updateData.fullName = fullName;
+        if (bio !== undefined) updateData.bio = bio;
+        if (phone !== undefined) updateData.phone = phone;
+
+        // Ensure username is unique if changing
+        if (username) {
+            const usernameLower = username.toLowerCase();
+            const usernameCheck = await db.collection('users').where('username', '==', usernameLower).get();
+            if (!usernameCheck.empty) {
+                const existingDoc = usernameCheck.docs[0];
+                if (existingDoc.id !== userId) {
+                    return res.status(400).json({ error: 'Username already taken' });
+                }
+            }
+            updateData.username = usernameLower;
+        }
+
+        // Handle Image Upload
+        if (req.file) {
+            try {
+                updateData.profileImageUrl = await uploadToCloudinary(req.file.buffer, 'yebichu_profiles');
+            } catch (imgErr) {
+                console.error('Failed to upload profile image update:', imgErr);
+                return res.status(500).json({ error: 'Failed to upload image' });
+            }
+        }
+
+        if (Object.keys(updateData).length > 0) {
+            updateData.updatedAt = new Date().toISOString();
+            await db.collection('users').doc(userId).update(updateData);
+        }
+
+        res.status(200).json({ id: userId, ...updateData, message: 'Profile updated successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -177,4 +238,16 @@ const loginWithIdentifier = async (req, res) => {
     }
 };
 
-module.exports = { signup, getUserProfile, getBarbers, getAllUsers, updateUserRole, deleteUser, getAdminInfo, toggleWishlist, loginWithIdentifier, updatePushToken };
+module.exports = {
+    signup,
+    getUserProfile,
+    updateUserProfile,
+    getBarbers,
+    getAllUsers,
+    updateUserRole,
+    deleteUser,
+    getAdminInfo,
+    toggleWishlist,
+    loginWithIdentifier,
+    updatePushToken
+};

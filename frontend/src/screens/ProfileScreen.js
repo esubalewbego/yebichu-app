@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { User, Mail, Shield, LogOut, ChevronRight, Settings, Bell, CreditCard, HelpCircle } from 'lucide-react-native';
+import { User, Mail, Shield, LogOut, ChevronRight, Settings, Bell, CreditCard, HelpCircle, Edit3, Info } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
+import { Image } from 'react-native';
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const { user, logout } = useAuth();
 
@@ -31,8 +32,8 @@ export default function ProfileScreen() {
         );
     };
 
-    const renderSettingItem = (icon, title, subtitle = null, isDestructive = false) => (
-        <TouchableOpacity style={styles.settingItem} onPress={isDestructive ? handleLogout : undefined}>
+    const renderSettingItem = (icon, title, subtitle = null, isDestructive = false, onPressAction) => (
+        <TouchableOpacity style={styles.settingItem} onPress={isDestructive ? handleLogout : onPressAction}>
             <View style={styles.settingIconBox}>
                 {icon}
             </View>
@@ -59,15 +60,24 @@ export default function ProfileScreen() {
                 >
                     <View style={styles.profileBox}>
                         <View style={styles.avatarLarge}>
-                            <Text style={styles.avatarTxt}>
-                                {user?.email ? user.email.charAt(0).toUpperCase() : 'Y'}
-                            </Text>
+                            {user?.profileImageUrl ? (
+                                <Image source={{ uri: user.profileImageUrl }} style={styles.profileImageFull} />
+                            ) : (
+                                <Text style={styles.avatarTxt}>
+                                    {user?.email ? user.email.charAt(0).toUpperCase() : 'Y'}
+                                </Text>
+                            )}
                             <View style={styles.rankBadge}>
                                 <Shield color="#000" size={12} fill="#000" />
                             </View>
                         </View>
-                        <Text style={styles.profileName}>{user?.email ? user.email.split('@')[0] : 'Valued Client'}</Text>
-                        <Text style={styles.profileEmail}>{user?.email}</Text>
+                        <Text style={styles.profileName}>{user?.fullName || user?.username || (user?.email ? user.email.split('@')[0] : 'Valued Client')}</Text>
+                        <Text style={styles.profileEmail}>@{user?.username || 'user'}</Text>
+
+                        <TouchableOpacity style={styles.editProfileBtn} onPress={() => navigation.navigate('EditProfile')}>
+                            <Edit3 color={COLORS.primary} size={16} />
+                            <Text style={styles.editProfileBtnText}>Edit Profile</Text>
+                        </TouchableOpacity>
 
                         <View style={styles.statsRow}>
                             <View style={styles.stat}>
@@ -103,6 +113,8 @@ export default function ProfileScreen() {
                     <View style={styles.settingsCard}>
                         {renderSettingItem(<HelpCircle color={COLORS.textSecondary} size={20} />, 'Concierge Help', 'Chat with our support team')}
                         <View style={styles.divider} />
+                        {renderSettingItem(<Info color={COLORS.primary} size={20} />, 'About Yebichu', 'App info & contact', false, () => navigation.navigate('About'))}
+                        <View style={styles.divider} />
                         <TouchableOpacity style={styles.logoutRow} onPress={handleLogout}>
                             <View style={styles.logoutIconBox}>
                                 <LogOut color="#F44336" size={20} />
@@ -132,18 +144,23 @@ const styles = StyleSheet.create({
         borderWidth: 4, borderColor: COLORS.background,
         elevation: 10, shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.3, shadowRadius: 10
+        shadowOpacity: 0.3, shadowRadius: 10,
+        overflow: 'visible'
     },
+    profileImageFull: { width: '100%', height: '100%', borderRadius: 55, resizeMode: 'cover' },
     avatarTxt: { color: COLORS.background, fontSize: 44, fontWeight: 'bold' },
     rankBadge: {
-        position: 'absolute', bottom: 2, right: 2,
+        position: 'absolute', bottom: -5, right: -5,
         width: 30, height: 30, borderRadius: 15,
         backgroundColor: COLORS.primary,
         justifyContent: 'center', alignItems: 'center',
-        borderWidth: 3, borderColor: COLORS.background
+        borderWidth: 3, borderColor: COLORS.background,
+        zIndex: 10
     },
     profileName: { color: COLORS.text, fontSize: 26, fontWeight: 'bold', marginTop: 16, textTransform: 'capitalize' },
     profileEmail: { color: COLORS.textSecondary, fontSize: 14, marginTop: 4 },
+    editProfileBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.card, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 16, borderWidth: 1, borderColor: COLORS.primary + '50' },
+    editProfileBtnText: { color: COLORS.primary, fontSize: 13, fontWeight: 'bold', marginLeft: 6 },
     statsRow: {
         flexDirection: 'row', alignItems: 'center',
         marginTop: 24, backgroundColor: 'rgba(255,255,255,0.05)',

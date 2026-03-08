@@ -1,20 +1,35 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import CustomButton from '../components/Button';
-import { Mail, Lock, User, ChevronLeft, ArrowLeft, ShieldCheck, Smartphone, Scissors } from 'lucide-react-native';
+import { Mail, Lock, User, ChevronLeft, ArrowLeft, ShieldCheck, Smartphone, Scissors, Camera } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function SignupScreen({ navigation }) {
     const [fullName, setFullName] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [profileImage, setProfileImage] = useState(null);
     const [loading, setLoading] = useState(false);
     const insets = useSafeAreaInsets();
     const { signup } = useAuth();
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+        });
+
+        if (!result.canceled) {
+            setProfileImage(result.assets[0].uri);
+        }
+    };
 
     const handleSignup = async () => {
         if (!email || !password || !fullName || !username) {
@@ -23,12 +38,23 @@ export default function SignupScreen({ navigation }) {
         }
         setLoading(true);
         try {
-            await signup({
-                fullName,
-                username,
-                email,
-                password
-            });
+            const formData = new FormData();
+            formData.append('fullName', fullName);
+            formData.append('username', username);
+            formData.append('email', email);
+            formData.append('password', password);
+
+            if (profileImage) {
+                const uriParts = profileImage.split('.');
+                const fileType = uriParts[uriParts.length - 1];
+                formData.append('profileImage', {
+                    uri: profileImage,
+                    name: `photo.${fileType}`,
+                    type: `image/${fileType}`,
+                });
+            }
+
+            await signup(formData);
 
             Alert.alert('Success', `Account created successfully!`, [
                 { text: 'Login Now', onPress: () => navigation.navigate('Login') }
@@ -73,6 +99,19 @@ export default function SignupScreen({ navigation }) {
                     </View>
 
                     <View style={styles.form}>
+                        <View style={styles.imagePickerContainer}>
+                            <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
+                                {profileImage ? (
+                                    <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                                ) : (
+                                    <View style={styles.imagePlaceholder}>
+                                        <Camera color={COLORS.primary} size={32} />
+                                        <Text style={styles.imagePlaceholderText}>Add Photo</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Full Name</Text>
                             <View style={styles.inputWrapper}>
@@ -203,6 +242,36 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         fontSize: 15,
         lineHeight: 22,
+    },
+    imagePickerContainer: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    imagePickerBtn: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: COLORS.card,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: COLORS.primary,
+        overflow: 'hidden',
+    },
+    profileImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    imagePlaceholder: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    imagePlaceholderText: {
+        color: COLORS.primary,
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginTop: 4,
     },
     form: {
         width: '100%',

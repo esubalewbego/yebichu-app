@@ -12,6 +12,8 @@ import ManageCategoriesScreen from '../screens/ManageCategoriesScreen';
 import ManageStylesScreen from '../screens/ManageStylesScreen';
 import ManageMoreScreen from '../screens/ManageMoreScreen';
 import AdminBookingsScreen from '../screens/AdminBookingsScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import AboutScreen from '../screens/AboutScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,6 +28,8 @@ export default function AppNavigator() {
 
                     {/* Shared Authenticated Screens */}
                     <Stack.Screen name="Chat" component={ChatScreen} />
+                    <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+                    <Stack.Screen name="About" component={AboutScreen} />
 
                     {/* Role-Specific Private Screens */}
                     {user.role === 'admin' && (
