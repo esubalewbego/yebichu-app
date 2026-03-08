@@ -34,7 +34,7 @@ export default function PaymentScreen({ route, navigation }) {
                     item,
                     date,
                     time,
-                    status: isBarber ? 'paid' : 'pending', // Barbers settle immediately, customers pay later
+                    status: isBarber ? 'paid' : (barberId ? 'assigned' : 'pending'), // If barber selected, it's assigned, else pending
                     tx_ref: txRef
                 });
                 setPaymentStatus('success');
@@ -128,7 +128,7 @@ export default function PaymentScreen({ route, navigation }) {
                     item,
                     date,
                     time,
-                    status: 'paid',
+                    status: 'paid', // Keep as 'paid' because it was paid for via Chapa
                     tx_ref: txRef
                 });
 

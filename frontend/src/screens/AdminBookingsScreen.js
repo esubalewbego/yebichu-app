@@ -116,9 +116,11 @@ export default function AdminBookingsScreen({ navigation }) {
                         <Text style={[styles.actionText, { color: '#4CAF50' }]}>Complete</Text>
                     </TouchableOpacity>
                 )}
-                {item.status === 'pending' && (
+                {(item.status === 'pending' || item.status === 'assigned') && (
                     <TouchableOpacity style={styles.actionBtn} onPress={() => handleOpenAssignModal(item.id)}>
-                        <Text style={[styles.actionText, { color: COLORS.primary }]}>Assign</Text>
+                        <Text style={[styles.actionText, { color: COLORS.primary }]}>
+                            {item.status === 'assigned' ? 'Reassign' : 'Assign'}
+                        </Text>
                     </TouchableOpacity>
                 )}
                 <TouchableOpacity style={styles.actionBtn} onPress={() => handleDelete(item.id)}>
