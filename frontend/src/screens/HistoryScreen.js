@@ -31,10 +31,8 @@ export default function HistoryScreen({ navigation }) {
 
     const handleCancel = async (id) => {
         try {
-            // Reusing the update status endpoint for simplicity 
-            // In a real app we might have a specific cancel endpoint for customers
-            const { updateAppointmentStatus } = require('../services/api');
-            await updateAppointmentStatus(id, 'cancelled');
+            const { cancelUserAppointment } = require('../services/api');
+            await cancelUserAppointment(id);
             setAppointments(prev => prev.map(appt => appt.id === id ? { ...appt, status: 'cancelled' } : appt));
         } catch (error) {
             console.error(error);

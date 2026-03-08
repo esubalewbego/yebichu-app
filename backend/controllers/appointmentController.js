@@ -186,4 +186,26 @@ const deleteAppointment = async (req, res) => {
     }
 };
 
-module.exports = { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber, deleteAppointment };
+const cancelAppointmentByUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const uid = req.user.uid;
+
+        const apptDoc = await db.collection('appointments').doc(id).get();
+        if (!apptDoc.exists) {
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+
+        const apptData = apptDoc.data();
+        if (apptData.userId !== uid) {
+            return res.status(403).json({ error: 'Forbidden: You can only cancel your own appointments' });
+        }
+
+        await db.collection('appointments').doc(id).update({ status: 'cancelled' });
+        res.status(200).json({ id, status: 'cancelled' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber, deleteAppointment, cancelAppointmentByUser };

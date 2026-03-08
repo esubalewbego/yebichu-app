@@ -86,6 +86,7 @@ export const recordCashPayment = (id) => api.patch(`/appointments/admin/${id}/st
 });
 export const deleteAppointment = (id) => api.delete(`/appointments/admin/${id}`);
 export const updateAppointmentStatus = (id, status) => api.patch(`/appointments/admin/${id}/status`, { status });
+export const cancelUserAppointment = (id) => api.patch(`/appointments/user/${id}/cancel`);
 export const getAdminInfo = () => api.get('/auth/admin-info');
 export const toggleWishlist = (id) => api.post('/auth/wishlist/toggle', { id });
 
