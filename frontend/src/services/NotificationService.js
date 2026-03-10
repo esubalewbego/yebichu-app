@@ -48,7 +48,9 @@ export async function registerForPushNotificationsAsync() {
             const projectId = 'b406e22c-aef6-4d1e-bd18-9fc3eceb0b8c'; // Fallback or retrieve from expo config if using EAS
             // For bare Expo Go without EAS or valid Expo Account, passing empty projectId or relying on defaults might be needed, 
             // but recent Expo requires projectId if eas.json exists. Assuming it works without if not on EAS.
-            token = (await Notifications.getExpoPushTokenAsync()).data;
+            token = (await Notifications.getExpoPushTokenAsync({
+                projectId,
+            })).data;
         } catch (error) {
             console.log('Error fetching push token', error);
         }
