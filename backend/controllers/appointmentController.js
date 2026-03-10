@@ -289,6 +289,22 @@ const getAnalytics = async (req, res) => {
 const getNotifications = async (req, res) => {
     try {
         const uid = req.user.uid;
+        const now = new Date();
+        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+
+        // 1. Cleanup: Delete notifications older than 2 hours
+        const oldDocs = await db.collection('notifications')
+            .where('userId', '==', uid)
+            .where('createdAt', '<', twoHoursAgo)
+            .get();
+
+        if (!oldDocs.empty) {
+            const batch = db.batch();
+            oldDocs.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+        }
+
+        // 2. Fetch remaining notifications
         const snapshot = await db.collection('notifications')
             .where('userId', '==', uid)
             .orderBy('createdAt', 'desc')

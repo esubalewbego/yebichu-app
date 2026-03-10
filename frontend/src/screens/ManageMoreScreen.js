@@ -40,6 +40,13 @@ export default function ManageMoreScreen({ navigation }) {
             onPress: () => navigation.navigate('Discounts')
         },
         {
+            title: 'Users',
+            subtitle: 'Manage community & permissions',
+            icon: Users,
+            color: '#9C27B0',
+            onPress: () => navigation.navigate('Users')
+        },
+        {
             title: 'Audit Logs',
             subtitle: 'Security & access history',
             icon: Shield,
