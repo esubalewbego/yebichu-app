@@ -16,6 +16,7 @@
       "package": "com.yebichu.barbershop",
       "googleServicesFile": "./google-services.json",
       "versionCode": 1,
+      "newArchEnabled": false,
       "adaptiveIcon": {
         "backgroundColor": "#1A1A1A",
         "foregroundImage": "./assets/android-icon-foreground.png",

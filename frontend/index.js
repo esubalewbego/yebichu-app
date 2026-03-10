@@ -1,4 +1,16 @@
 import 'react-native-gesture-handler';
+import { NativeModules } from 'react-native';
+
+// Critical polyfill for React Native 0.76+ compatibility with legacy modules
+if (NativeModules && !NativeModules.EventEmitter) {
+    NativeModules.EventEmitter = {
+        addListener: () => ({ remove: () => { } }),
+        removeListeners: () => { },
+        removeAllListeners: () => { },
+        emit: () => { },
+    };
+}
+
 import { registerRootComponent } from 'expo';
 import { LogBox } from 'react-native';
 
