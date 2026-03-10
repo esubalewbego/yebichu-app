@@ -1,21 +1,36 @@
 import 'react-native-gesture-handler';
 import { NativeModules } from 'react-native';
 
-// Universal polyfill for EventEmitter missing in Bridgeless/New Architecture environments
-if (NativeModules) {
-    if (!NativeModules.EventEmitter) {
-        NativeModules.EventEmitter = {
-            addListener: () => ({ remove: () => { } }),
-            removeListeners: () => { },
-            removeAllListeners: () => { },
-            emit: () => { },
-        };
-    }
-    // Ensure global visibility for sensitive legacy modules
+// Safer compatibility fix for SDK 55 / RN 0.83+ 
+// Avoids direct assignment to NativeModules proxy to prevent bridge conflicts
+(function () {
+    const mockEmitter = {
+        addListener: () => ({ remove: () => { } }),
+        removeListeners: () => { },
+        removeAllListeners: () => { },
+        emit: () => { },
+    };
+
+    // Polyfill globally for legacy modules that look for it
     if (typeof global.EventEmitter === 'undefined') {
-        global.EventEmitter = NativeModules.EventEmitter;
+        global.EventEmitter = mockEmitter;
     }
-}
+
+    // Only attempt to supplement NativeModules if the property isn't defined
+    // and use defineProperty to be safer with Proxies
+    try {
+        if (NativeModules && typeof NativeModules.EventEmitter === 'undefined') {
+            Object.defineProperty(NativeModules, 'EventEmitter', {
+                value: mockEmitter,
+                writable: true,
+                configurable: true,
+                enumerable: true
+            });
+        }
+    } catch (e) {
+        console.log('Safe-polyfilling NativeModules.EventEmitter skipped: bridge is restricted.');
+    }
+})();
 
 import { registerRootComponent } from 'expo';
 import { LogBox } from 'react-native';
