@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "484326733379",
+    "project_id": "yebichu-app",
+    "storage_bucket": "yebichu-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:484326733379:android:8ea3b19dfdfb322e2e86f6",
+        "android_client_info": {
+          "package_name": "com.yebichu.barbershop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaZ-2DOAT1-sYmqARmzDe-4Btpdzh4JoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
