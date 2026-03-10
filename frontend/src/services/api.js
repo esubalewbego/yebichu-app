@@ -27,13 +27,9 @@ api.interceptors.request.use(
 );
 
 // Auth
-export const signup = (data) => {
-    const isFormData = data instanceof FormData;
-    return api.post('/auth/signup', data, {
-        headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined
-    });
-};
+export const signup = (data) => api.post('/auth/signup', data);
 export const loginIdentifier = (identifier) => api.post('/auth/login-identifier', { identifier });
+export const checkEmailExists = (email) => api.post('/auth/check-email', { email });
 export const getProfile = (userId) => api.get(`/auth/profile/${userId}`);
 
 // Packages
@@ -104,12 +100,8 @@ export const getAllUsers = () => api.get('/auth/users');
 export const updateUserRole = (id, role) => api.patch(`/auth/users/${id}/role`, { role });
 export const deleteUserById = (id) => api.delete(`/auth/users/${id}`);
 export const getUserProfile = (uid) => api.get(`/auth/profile/${uid}`);
-export const updateUserProfile = (uid, data) => {
-    const isFormData = data instanceof FormData;
-    return api.put(`/auth/profile/${uid}`, data, {
-        headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined
-    });
-};
+export const updateUserProfile = (uid, data) => api.put(`/auth/profile/${uid}`, data);
+export const updatePassword = (uid, newPassword) => api.patch(`/auth/profile/${uid}/password`, { newPassword });
 
 export const initializePayment = (data) => api.post('/payments/initialize', data);
 export const verifyPayment = (txRef) => api.get(`/payments/verify/${txRef}`);
@@ -121,5 +113,15 @@ export const getMessages = (conversationId) => api.get(`/chat/messages/${convers
 
 // Ratings
 export const rateStyle = (id, data) => api.post(`/packages/styles/${id}/rate`, data);
+
+// Notifications
+export const getNotifications = () => api.get('/appointments/notifications');
+export const markNotificationRead = (id) => api.patch(`/appointments/notifications/${id}/read`);
+
+// Discounts
+export const getDiscounts = () => api.get('/discounts');
+export const createDiscount = (data) => api.post('/discounts', data);
+export const updateDiscount = (id, data) => api.put(`/discounts/${id}`, data);
+export const deleteDiscount = (id) => api.delete(`/discounts/${id}`);
 
 export default api;

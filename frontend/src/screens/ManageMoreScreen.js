@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { Tag, BarChart2, Settings, ChevronRight, LogOut, Info, Shield, HelpCircle } from 'lucide-react-native';
+import { Tag, BarChart2, Settings, ChevronRight, LogOut, Info, Shield, HelpCircle, Bell, Users } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 
 export default function ManageMoreScreen({ navigation }) {
@@ -11,6 +11,13 @@ export default function ManageMoreScreen({ navigation }) {
     const { logout } = useAuth();
 
     const menuItems = [
+        {
+            title: 'Notifications',
+            subtitle: 'View system-wide activity logs',
+            icon: Bell,
+            color: '#FFD700',
+            onPress: () => navigation.navigate('Notifications')
+        },
         {
             title: 'Categories',
             subtitle: 'Organize your styles & services',
@@ -26,24 +33,24 @@ export default function ManageMoreScreen({ navigation }) {
             onPress: () => navigation.navigate('Reports')
         },
         {
-            title: 'System Settings',
-            subtitle: 'App preferences and configurations',
-            icon: Settings,
-            color: COLORS.primary,
-            onPress: () => { } // Placeholder
+            title: 'Discounts',
+            subtitle: 'Manage promo codes & offers',
+            icon: Percent,
+            color: '#E91E63',
+            onPress: () => navigation.navigate('Discounts')
         },
         {
-            title: 'Security',
-            subtitle: 'Access logs and permissions',
+            title: 'Audit Logs',
+            subtitle: 'Security & access history',
             icon: Shield,
             color: '#FF9800',
-            onPress: () => { } // Placeholder
+            onPress: () => navigation.navigate('Notifications') // Re-using notifications as a log
         },
     ];
 
     const supportItems = [
-        { title: 'Help Center', icon: HelpCircle, onPress: () => { } },
-        { title: 'App Info', icon: Info, onPress: () => { } },
+        { title: 'Help Center', icon: HelpCircle, onPress: () => navigation.navigate('ChatList') },
+        { title: 'App Info', icon: Info, onPress: () => navigation.navigate('About') },
     ];
 
     return (

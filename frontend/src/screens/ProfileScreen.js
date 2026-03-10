@@ -78,40 +78,23 @@ export default function ProfileScreen({ navigation }) {
                             <Edit3 color={COLORS.primary} size={16} />
                             <Text style={styles.editProfileBtnText}>Edit Profile</Text>
                         </TouchableOpacity>
-
-                        <View style={styles.statsRow}>
-                            <View style={styles.stat}>
-                                <Text style={styles.statVal}>12</Text>
-                                <Text style={styles.statLab}>Visits</Text>
-                            </View>
-                            <View style={styles.statDivider} />
-                            <View style={styles.stat}>
-                                <Text style={styles.statVal}>4</Text>
-                                <Text style={styles.statLab}>Faves</Text>
-                            </View>
-                        </View>
                     </View>
                 </LinearGradient>
 
                 <View style={styles.settingsGroup}>
                     <Text style={styles.groupLabel}>ACCOUNT MANAGEMENT</Text>
                     <View style={styles.settingsCard}>
-                        {renderSettingItem(<Settings color={COLORS.primary} size={20} />, 'Profile Preferences', 'Personalize your experience')}
-                        <View style={styles.divider} />
-                        {renderSettingItem(<Bell color={COLORS.primary} size={20} />, 'Push Notifications', 'Manage arrival alerts')}
-                        {user?.role === 'user' && (
-                            <>
-                                <View style={styles.divider} />
-                                {renderSettingItem(<CreditCard color={COLORS.primary} size={20} />, 'Stored Payments', 'Fast checkout setup')}
-                            </>
-                        )}
+                        {renderSettingItem(<Bell color={COLORS.primary} size={20} />, 'Notifications', 'Manage your activity alerts', false, () => navigation.navigate('Notifications'))}
                     </View>
                 </View>
 
                 <View style={styles.settingsGroup}>
                     <Text style={styles.groupLabel}>PREMIUM SUPPORT</Text>
                     <View style={styles.settingsCard}>
-                        {renderSettingItem(<HelpCircle color={COLORS.textSecondary} size={20} />, 'Concierge Help', 'Chat with our support team')}
+                        {renderSettingItem(<HelpCircle color={COLORS.textSecondary} size={20} />, 'Concierge Help', 'Chat with our support team', false, () => {
+                            // Find admin or just go to chat list
+                            navigation.navigate('ChatList');
+                        })}
                         <View style={styles.divider} />
                         {renderSettingItem(<Info color={COLORS.primary} size={20} />, 'About Yebichu', 'App info & contact', false, () => navigation.navigate('About'))}
                         <View style={styles.divider} />

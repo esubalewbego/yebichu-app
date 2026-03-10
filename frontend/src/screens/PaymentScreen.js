@@ -66,7 +66,7 @@ export default function PaymentScreen({ route, navigation }) {
                 phone_number: safePhone,
                 tx_ref: txRef,
                 callback_url: 'https://webhook.site/placeholder',
-                return_url: 'https://www.google.com/',
+                return_url: 'https://chapa.co/success-placeholder',
             };
 
             const { data } = await initializePayment(paymentData);
@@ -93,7 +93,7 @@ export default function PaymentScreen({ route, navigation }) {
         if (loading) setLoading(false);
 
         // Chapa redirects to your return_url when payment completes successfully
-        if (navState.url.includes('google.com')) {
+        if (navState.url.includes('success-placeholder')) {
             setShowWebView(false);
             verifyAndConfirm(currentTxRef);
         }

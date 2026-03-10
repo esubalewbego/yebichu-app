@@ -1,4 +1,5 @@
 const { db, admin } = require('../config/firebase');
+const { notifyUser } = require('../utils/notificationHelper');
 
 const sendMessage = async (req, res) => {
     try {
@@ -41,6 +42,22 @@ const sendMessage = async (req, res) => {
         }, { merge: true });
 
         res.status(201).json({ ...message, timestamp: new Date().toISOString() });
+
+        // Notify Receiver
+        try {
+            const senderDoc = await db.collection('users').doc(senderId).get();
+            const senderName = senderDoc.exists ? (senderDoc.data().fullName || senderDoc.data().displayName || 'someone') : 'someone';
+
+            notifyUser(
+                receiverId,
+                'New Message',
+                `${senderName} sent you a message: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
+                'chat_message',
+                conversationId
+            );
+        } catch (notifierErr) {
+            console.error('Failed to send chat notification:', notifierErr);
+        }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

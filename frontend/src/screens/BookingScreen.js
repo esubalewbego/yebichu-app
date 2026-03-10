@@ -3,14 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { Calendar, Clock, ChevronLeft, Star, MapPin, Check, User } from 'lucide-react-native';
+import { Calendar as LucideCalendar, Clock, ChevronLeft, Star, MapPin, Check, User } from 'lucide-react-native';
+import { Calendar } from 'react-native-calendars';
 import { getBarbersList } from '../services/api';
 import CustomButton from '../components/Button';
 
 export default function BookingScreen({ route, navigation }) {
     const { item, isPackage } = route.params;
     const insets = useSafeAreaInsets();
-    const [selectedDate, setSelectedDate] = useState('2026-03-10');
+    const today = new Date().toISOString().split('T')[0];
+    const [selectedDate, setSelectedDate] = useState(today);
     const [selectedTime, setSelectedTime] = useState('10:00 AM');
     const [barbers, setBarbers] = useState([]);
     const [selectedBarber, setSelectedBarber] = useState(null);
@@ -80,26 +82,34 @@ export default function BookingScreen({ route, navigation }) {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Select Date</Text>
-                        <Text style={styles.monthText}>March 2026</Text>
                     </View>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateList}>
-                        {['10', '11', '12', '13', '14', '15', '16'].map((d, i) => {
-                            const date = `2026-03-${d}`;
-                            const isSelected = selectedDate === date;
-                            const days = ['Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'];
-                            return (
-                                <TouchableOpacity
-                                    key={i}
-                                    style={[styles.dateCard, isSelected && styles.selectedCard]}
-                                    onPress={() => setSelectedDate(date)}
-                                >
-                                    <Text style={[styles.dayText, isSelected && styles.selectedText]}>{days[i]}</Text>
-                                    <Text style={[styles.dateNumber, isSelected && styles.selectedText]}>{d}</Text>
-                                    {isSelected && <View style={styles.activeDot} />}
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
+                    <View style={styles.calendarContainer}>
+                        <Calendar
+                            onDayPress={day => setSelectedDate(day.dateString)}
+                            markedDates={{
+                                [selectedDate]: { selected: true, disableTouchEvent: true, selectedColor: COLORS.primary }
+                            }}
+                            theme={{
+                                backgroundColor: COLORS.card,
+                                calendarBackground: COLORS.card,
+                                textSectionTitleColor: COLORS.textSecondary,
+                                selectedDayBackgroundColor: COLORS.primary,
+                                selectedDayTextColor: COLORS.background,
+                                todayTextColor: COLORS.primary,
+                                dayTextColor: COLORS.text,
+                                textDisabledColor: '#444',
+                                dotColor: COLORS.primary,
+                                monthTextColor: COLORS.text,
+                                indicatorColor: COLORS.primary,
+                                textDayFontWeight: '600',
+                                textMonthFontWeight: 'bold',
+                                textDayHeaderFontWeight: '600',
+                                arrowColor: COLORS.primary,
+                            }}
+                            minDate={today}
+                            style={styles.calendar}
+                        />
+                    </View>
                 </View>
 
                 <View style={styles.section}>
@@ -275,37 +285,16 @@ const styles = StyleSheet.create({
         color: COLORS.textSecondary,
         fontSize: 14,
     },
-    dateList: {
-        paddingLeft: 24,
-        paddingRight: 10,
-    },
-    dateCard: {
+    calendarContainer: {
+        marginHorizontal: 24,
         backgroundColor: COLORS.card,
-        width: 65,
-        height: 85,
-        borderRadius: 16,
-        marginRight: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderRadius: 20,
+        overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#333',
+        borderColor: '#333'
     },
-    dayText: {
-        color: COLORS.textSecondary,
-        fontSize: 12,
-        marginBottom: 4,
-    },
-    dateNumber: {
-        color: COLORS.text,
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    activeDot: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: COLORS.background,
-        marginTop: 4,
+    calendar: {
+        borderRadius: 20
     },
     timeGrid: {
         flexDirection: 'row',

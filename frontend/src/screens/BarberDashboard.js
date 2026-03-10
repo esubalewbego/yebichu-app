@@ -74,7 +74,10 @@ export default function BarberDashboard({ navigation }) {
                 const s = a.status?.toLowerCase();
                 return s === 'completed' || s === 'paid';
             })
-            .reduce((sum, a) => sum + (Number(a.item?.price || a.price) || 0), 0)
+            .reduce((sum, a) => sum + (Number(a.item?.price || a.price) || 0), 0),
+        avgRating: appointments.length > 0
+            ? (appointments.reduce((sum, a) => sum + (a.item?.avgRating || 5.0), 0) / appointments.length).toFixed(1)
+            : '5.0'
     };
 
     const markAsCompleted = async (id) => {
@@ -119,7 +122,7 @@ export default function BarberDashboard({ navigation }) {
                 </View>
                 <View style={styles.metricBox}>
                     <Text style={styles.metricLab}>Avg Rating</Text>
-                    <Text style={styles.metricVal}>4.9/5.0</Text>
+                    <Text style={styles.metricVal}>{stats.avgRating}/5.0</Text>
                     <View style={styles.starRow}>
                         {[1, 2, 3, 4, 5].map(i => (
                             <Text key={i} style={{ color: COLORS.primary, fontSize: 12 }}>★</Text>

@@ -12,6 +12,22 @@ const getUserToken = async (uid) => {
     return doc.exists ? doc.data().expoPushToken : null;
 };
 
+const saveNotification = async (userId, title, body, type = 'general', entityId = null) => {
+    try {
+        await db.collection('notifications').add({
+            userId,
+            title,
+            body,
+            type,
+            entityId,
+            read: false,
+            createdAt: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error saving notification:', error);
+    }
+};
+
 const createAppointment = async (req, res) => {
     try {
         const {
@@ -47,17 +63,32 @@ const createAppointment = async (req, res) => {
 
         const docRef = await db.collection('appointments').add(appointment);
 
-        // --- PUSH NOTIFICATIONS ---
+        // --- PUSH NOTIFICATIONS & STORAGE ---
         try {
-            const adminTokens = await getAdminTokens();
+            const adminSnapshot = await db.collection('users').where('role', '==', 'admin').get();
+            const adminTokens = adminSnapshot.docs.map(doc => doc.data().expoPushToken).filter(Boolean);
+            const adminUids = adminSnapshot.docs.map(doc => doc.id);
+
+            const title = 'New Booking!';
+            const body = `${userName} just booked an appointment.`;
+
             if (adminTokens.length > 0) {
-                await sendPushNotification(adminTokens, 'New Booking!', `${userName} just booked an appointment.`);
+                await sendPushNotification(adminTokens, title, body, { appointmentId: docRef.id });
             }
+
+            // Save for each admin
+            for (const adminUid of adminUids) {
+                await saveNotification(adminUid, title, body, 'booking_new', docRef.id);
+            }
+
             if (barberId) {
                 const barberToken = await getUserToken(barberId);
+                const bTitle = 'New Booking Assigned!';
+                const bBody = `You have a new booking from ${userName}.`;
                 if (barberToken) {
-                    await sendPushNotification(barberToken, 'New Booking Assigned!', `You have a new booking from ${userName}.`);
+                    await sendPushNotification(barberToken, bTitle, bBody, { appointmentId: docRef.id });
                 }
+                await saveNotification(barberId, bTitle, bBody, 'booking_assigned', docRef.id);
             }
         } catch (pushErr) {
             console.error('Push notification error:', pushErr);
@@ -140,13 +171,16 @@ const updateAppointmentStatus = async (req, res) => {
 
         await db.collection('appointments').doc(id).update(updateData);
 
-        // --- PUSH NOTIFICATIONS ---
+        // --- PUSH NOTIFICATIONS & STORAGE ---
         try {
             if (status === 'completed') {
                 const clientToken = await getUserToken(apptData.userId);
+                const title = 'Appointment Completed';
+                const body = 'Thank you for your visit! Your appointment is now complete.';
                 if (clientToken) {
-                    await sendPushNotification(clientToken, 'Appointment Completed', 'Thank you for your visit! Your appointment is now complete.');
+                    await sendPushNotification(clientToken, title, body, { appointmentId: id });
                 }
+                await saveNotification(apptData.userId, title, body, 'booking_completed', id);
             }
         } catch (pushErr) {
             console.error('Push notification error:', pushErr);
@@ -173,20 +207,26 @@ const assignBarber = async (req, res) => {
             status: 'assigned' // Auto-update status when a barber is assigned
         });
 
-        // --- PUSH NOTIFICATIONS ---
+        // --- PUSH NOTIFICATIONS & STORAGE ---
         try {
             const apptDoc = await db.collection('appointments').doc(id).get();
             const apptData = apptDoc.data();
 
             const barberToken = await getUserToken(barberId);
+            const bTitle = 'New Assignment';
+            const bBody = `You have been assigned to an appointment for ${apptData.userName || 'a client'}.`;
             if (barberToken) {
-                await sendPushNotification(barberToken, 'New Assignment', `You have been assigned to an appointment for ${apptData.userName || 'a client'}.`);
+                await sendPushNotification(barberToken, bTitle, bBody, { appointmentId: id });
             }
+            await saveNotification(barberId, bTitle, bBody, 'booking_assigned', id);
 
             const clientToken = await getUserToken(apptData.userId);
+            const cTitle = 'Booking Update';
+            const cBody = 'Your booking has been assigned to a barber.';
             if (clientToken) {
-                await sendPushNotification(clientToken, 'Booking Update', 'Your booking has been assigned to a barber.');
+                await sendPushNotification(clientToken, cTitle, cBody, { appointmentId: id });
             }
+            await saveNotification(apptData.userId, cTitle, cBody, 'booking_update', id);
         } catch (pushErr) {
             console.error('Push notification error:', pushErr);
         }
@@ -200,8 +240,12 @@ const assignBarber = async (req, res) => {
 
 const getAnalytics = async (req, res) => {
     try {
-        const snapshot = await db.collection('appointments').get();
-        const appointments = snapshot.docs.map(doc => doc.data());
+        const apptsSnapshot = await db.collection('appointments').get();
+        const packagesSnapshot = await db.collection('packages').get();
+        const stylesSnapshot = await db.collection('styles').get();
+        const usersSnapshot = await db.collection('users').get();
+
+        const appointments = apptsSnapshot.docs.map(doc => doc.data());
 
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -230,10 +274,39 @@ const getAnalytics = async (req, res) => {
             cancelled: appointments.filter(a => a.status?.toLowerCase() === 'cancelled').length,
             totalRevenue: totalRevenue,
             monthlyRevenue: monthlyRevenue,
-            averageTicketSize: completedOrPaid.length > 0 ? totalRevenue / completedOrPaid.length : 0
+            averageTicketSize: completedOrPaid.length > 0 ? totalRevenue / completedOrPaid.length : 0,
+            totalPackages: packagesSnapshot.size,
+            totalStyles: stylesSnapshot.size,
+            totalUsers: usersSnapshot.size
         };
 
         res.status(200).json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const getNotifications = async (req, res) => {
+    try {
+        const uid = req.user.uid;
+        const snapshot = await db.collection('notifications')
+            .where('userId', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .limit(50)
+            .get();
+
+        const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.status(200).json(notifications);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const markNotificationRead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.collection('notifications').doc(id).update({ read: true });
+        res.status(200).json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -289,4 +362,16 @@ const cancelAppointmentByUser = async (req, res) => {
     }
 };
 
-module.exports = { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber, deleteAppointment, cancelAppointmentByUser };
+module.exports = {
+    createAppointment,
+    getUserAppointments,
+    getBarberAppointments,
+    getAllAppointments,
+    updateAppointmentStatus,
+    getAnalytics,
+    assignBarber,
+    deleteAppointment,
+    cancelAppointmentByUser,
+    getNotifications,
+    markNotificationRead
+};

@@ -28,6 +28,7 @@ app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/discounts', require('./routes/discountRoutes'));
 
 // Start Server
 if (require.main === module) {

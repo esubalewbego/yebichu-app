@@ -45,12 +45,13 @@ export default function SignupScreen({ navigation }) {
             formData.append('password', password);
 
             if (profileImage) {
-                const uriParts = profileImage.split('.');
-                const fileType = uriParts[uriParts.length - 1];
+                const filename = profileImage.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1] === 'jpg' ? 'jpeg' : match[1]}` : `image`;
                 formData.append('profileImage', {
                     uri: profileImage,
-                    name: `photo.${fileType}`,
-                    type: `image/${fileType}`,
+                    name: filename,
+                    type,
                 });
             }
 

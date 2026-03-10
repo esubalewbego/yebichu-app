@@ -3,10 +3,10 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { ArrowLeft, User, Mail, Phone, FileText, Camera, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, FileText, Camera, Trash2, Lock } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
-import { updateUserProfile } from '../services/api';
+import { updateUserProfile, updatePassword } from '../services/api';
 import CustomButton from '../components/Button';
 
 export default function EditProfileScreen({ navigation }) {
@@ -20,7 +20,11 @@ export default function EditProfileScreen({ navigation }) {
     const [profileImage, setProfileImage] = useState(user?.profileImageUrl || null);
     const [newImageSelected, setNewImageSelected] = useState(false);
 
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
     const [loading, setLoading] = useState(false);
+    const [passwordLoading, setPasswordLoading] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -63,12 +67,13 @@ export default function EditProfileScreen({ navigation }) {
             formData.append('phone', phone);
 
             if (newImageSelected && profileImage) {
-                const uriParts = profileImage.split('.');
-                const fileType = uriParts[uriParts.length - 1];
+                const filename = profileImage.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1] === 'jpg' ? 'jpeg' : match[1]}` : `image`;
                 formData.append('profileImage', {
                     uri: profileImage,
-                    name: `photo.${fileType}`,
-                    type: `image/${fileType}`,
+                    name: filename,
+                    type,
                 });
             }
 
@@ -91,6 +96,30 @@ export default function EditProfileScreen({ navigation }) {
             Alert.alert('Error', error.response?.data?.error || 'Failed to update profile');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePasswordUpdate = async () => {
+        if (!newPassword || newPassword.length < 6) {
+            Alert.alert('Error', 'Password must be at least 6 characters.');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            Alert.alert('Error', 'Passwords do not match.');
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            await updatePassword(user.uid, newPassword);
+            Alert.alert('Success', 'Password updated successfully!');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (error) {
+            console.error('Failed to update password:', error);
+            Alert.alert('Error', error.response?.data?.error || 'Failed to update password');
+        } finally {
+            setPasswordLoading(false);
         }
     };
 
@@ -221,12 +250,52 @@ export default function EditProfileScreen({ navigation }) {
                             disabled={loading}
                         />
                     </View>
-
-                    <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
-                        <Trash2 color="#F44336" size={20} />
-                        <Text style={styles.deleteBtnText}>Delete Account</Text>
-                    </TouchableOpacity>
                 </View>
+
+                <View style={[styles.section, { marginTop: 20 }]}>
+                    <Text style={styles.sectionLabel}>Security & Password</Text>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>New Password</Text>
+                        <View style={styles.inputWrapper}>
+                            <Lock color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                value={newPassword}
+                                onChangeText={setNewPassword}
+                                placeholder="Enter new password"
+                                placeholderTextColor="#555"
+                                secureTextEntry
+                            />
+                        </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Confirm New Password</Text>
+                        <View style={styles.inputWrapper}>
+                            <Lock color={COLORS.textSecondary} size={20} style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                placeholder="Confirm new password"
+                                placeholderTextColor="#555"
+                                secureTextEntry
+                            />
+                        </View>
+                    </View>
+
+                    <CustomButton
+                        title={passwordLoading ? "Updating..." : "Update Password"}
+                        onPress={handlePasswordUpdate}
+                        variant="outline"
+                        disabled={passwordLoading}
+                    />
+                </View>
+
+                <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
+                    <Trash2 color="#F44336" size={20} />
+                    <Text style={styles.deleteBtnText}>Delete Account</Text>
+                </TouchableOpacity>
             </ScrollView>
         </View>
     );
@@ -251,6 +320,7 @@ const styles = StyleSheet.create({
     atSymbol: { color: COLORS.textSecondary, fontSize: 18, fontWeight: 'bold', marginRight: 12 },
     input: { flex: 1, paddingVertical: 14, color: COLORS.text, fontSize: 15 },
     btnWrapper: { marginTop: 12, marginBottom: 32 },
+    sectionLabel: { color: COLORS.text, fontSize: 16, fontWeight: 'bold', marginBottom: 20 },
     deleteBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: '#F4433610', borderRadius: 16, borderWidth: 1, borderColor: '#F4433620' },
     deleteBtnText: { color: '#F44336', fontSize: 16, fontWeight: 'bold', marginLeft: 10 }
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
@@ -144,18 +144,20 @@ export default function AdminBookingsScreen({ navigation }) {
                 </View>
             </LinearGradient>
 
-            <View style={styles.filterBar}>
-                {['all', 'pending', 'assigned', 'completed', 'cancelled'].map(f => (
-                    <TouchableOpacity
-                        key={f}
-                        style={[styles.filterChip, filter === f && styles.activeFilter]}
-                        onPress={() => setFilter(f)}
-                    >
-                        <Text style={[styles.filterText, filter === f && styles.activeFilterText]}>
-                            {f.charAt(0).toUpperCase() + f.slice(1)}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+            <View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
+                    {['all', 'pending', 'assigned', 'completed', 'cancelled'].map(f => (
+                        <TouchableOpacity
+                            key={f}
+                            style={[styles.filterChip, filter === f && styles.activeFilter]}
+                            onPress={() => setFilter(f)}
+                        >
+                            <Text style={[styles.filterText, filter === f && styles.activeFilterText]}>
+                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
             </View>
 
             <FlatList

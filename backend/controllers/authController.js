@@ -1,5 +1,6 @@
 const { auth, db } = require('../config/firebase');
 const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
+const { notifyAdmins } = require('../utils/notificationHelper');
 
 const signup = async (req, res) => {
     try {
@@ -45,6 +46,14 @@ const signup = async (req, res) => {
         });
 
         res.status(201).json({ uid: userRecord.uid, email, role: userRole, profileImageUrl });
+
+        // Notify Admins of new registration
+        notifyAdmins(
+            'New User Registration',
+            `${fullName} (@${username}) has just joined Yebichu.`,
+            'new_user',
+            userRecord.uid
+        );
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -238,6 +247,38 @@ const loginWithIdentifier = async (req, res) => {
     }
 };
 
+const updatePassword = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { newPassword } = req.body;
+
+        if (req.user.uid !== userId && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
+        await auth.updateUser(userId, { password: newPassword });
+        res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const checkEmailExists = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'Email is required' });
+
+        const snapshot = await db.collection('users').where('email', '==', email).limit(1).get();
+        res.status(200).json({ exists: !snapshot.empty });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     signup,
     getUserProfile,
@@ -249,5 +290,7 @@ module.exports = {
     getAdminInfo,
     toggleWishlist,
     loginWithIdentifier,
-    updatePushToken
+    updatePushToken,
+    updatePassword,
+    checkEmailExists
 };

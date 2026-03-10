@@ -7,7 +7,7 @@ import {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
-import { getPackages, getStyles, rateStyle, getAdminInfo, getCategories, toggleWishlist as apiToggleWishlist } from '../services/api';
+import { getPackages, getStyles, rateStyle, getAdminInfo, getCategories, getDiscounts, toggleWishlist as apiToggleWishlist } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Scissors, Star, MapPin, Bell, Clock, ChevronRight, Search, Heart, Filter, MessageSquare, RefreshCw } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +24,7 @@ export default function HomeScreen({ navigation }) {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [adminUid, setAdminUid] = useState(null);
+    const [discounts, setDiscounts] = useState([]);
 
     useEffect(() => {
         if (user) {
@@ -62,12 +63,18 @@ export default function HomeScreen({ navigation }) {
 
     const fetchData = async () => {
         try {
-            const [stylesRes, packagesRes] = await Promise.all([getStyles(), getPackages()]);
+            const [stylesRes, packagesRes, discountsRes] = await Promise.all([
+                getStyles(),
+                getPackages(),
+                getDiscounts()
+            ]);
+
             const mergedData = [
                 ...stylesRes.data.map(s => ({ ...s, isPackage: false })),
                 ...packagesRes.data.map(p => ({ ...p, isPackage: true }))
             ];
             setHairStyles(mergedData);
+            setDiscounts(discountsRes.data.filter(d => d.active));
         } catch (error) {
             console.error('Failed to fetch Home Data:', error);
             setHairStyles([]);
@@ -134,8 +141,12 @@ export default function HomeScreen({ navigation }) {
                         >
                             <MessageSquare color={COLORS.primary} size={22} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.roundAction}>
+                        <TouchableOpacity
+                            style={styles.roundAction}
+                            onPress={() => navigation.navigate('Notifications')}
+                        >
                             <Bell color={COLORS.text} size={22} />
+                            {/* Placeholder for unread dot logic */}
                             <View style={styles.activeDot} />
                         </TouchableOpacity>
                     </View>
@@ -169,6 +180,30 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 ) : (
                     <>
+                        {discounts.length > 0 && (
+                            <View style={styles.discountsContainer}>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.discountsScroll}>
+                                    {discounts.map(discount => (
+                                        <TouchableOpacity key={discount.id} style={styles.discountCard} activeOpacity={0.8}>
+                                            <LinearGradient
+                                                colors={[COLORS.primary, '#D4AF37']}
+                                                start={{ x: 0, y: 0 }}
+                                                end={{ x: 1, y: 0 }}
+                                                style={styles.discountGradient}
+                                            >
+                                                <View style={styles.discountInfo}>
+                                                    <Text style={styles.discountPercent}>{discount.percentage}% OFF</Text>
+                                                    <Text style={styles.discountCode}>{discount.code}</Text>
+                                                </View>
+                                                <View style={styles.discountDivider} />
+                                                <Text style={styles.discountDesc} numberOfLines={1}>{discount.description || 'Special offer for you'}</Text>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+
                         <View style={styles.catsContainer}>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catsScroll}>
                                 {categories.map(cat => (
@@ -361,5 +396,14 @@ const styles = StyleSheet.create({
     modalCancel: { flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#444' },
     cancelTxt: { color: COLORS.text, fontWeight: '600' },
     modalSubmit: { flex: 1, backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
-    submitTxt: { color: '#000', fontWeight: 'bold' }
+    submitTxt: { color: '#000', fontWeight: 'bold' },
+    discountsContainer: { marginTop: 10, marginBottom: 10 },
+    discountsScroll: { paddingHorizontal: 24, gap: 12 },
+    discountCard: { width: 200, height: 90, borderRadius: 16, overflow: 'hidden' },
+    discountGradient: { flex: 1, padding: 12, justifyContent: 'center' },
+    discountInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    discountPercent: { color: '#000', fontSize: 18, fontWeight: '900' },
+    discountCode: { color: 'rgba(0,0,0,0.6)', fontSize: 12, fontWeight: 'bold', backgroundColor: 'rgba(255,255,255,0.3)', paddingHorizontal: 6, borderRadius: 4 },
+    discountDivider: { height: 1, backgroundColor: 'rgba(0,0,0,0.1)', marginVertical: 8 },
+    discountDesc: { color: '#000', fontSize: 11, fontWeight: '500', opacity: 0.8 },
 });

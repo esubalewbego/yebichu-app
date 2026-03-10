@@ -1,10 +1,12 @@
 const express = require('express');
-const { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber, deleteAppointment, cancelAppointmentByUser } = require('../controllers/appointmentController');
+const { createAppointment, getUserAppointments, getBarberAppointments, getAllAppointments, updateAppointmentStatus, getAnalytics, assignBarber, deleteAppointment, cancelAppointmentByUser, getNotifications, markNotificationRead } = require('../controllers/appointmentController');
 const { authenticate, authorizeAdmin, authorizeBarberOrAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 router.post('/', authenticate, createAppointment);
+router.get('/notifications', authenticate, getNotifications);
+router.patch('/notifications/:id/read', authenticate, markNotificationRead);
 router.get('/user/:userId', authenticate, getUserAppointments);
 router.patch('/user/:id/cancel', authenticate, cancelAppointmentByUser);
 router.get('/barber/:barberId', authenticate, getBarberAppointments);

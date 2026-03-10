@@ -1,4 +1,5 @@
 const { db, admin } = require('../config/firebase');
+const { broadcastToAllUsers } = require('../utils/notificationHelper');
 
 const getPackages = async (req, res) => {
     try {
@@ -88,6 +89,14 @@ const createPackage = async (req, res) => {
             createdAt: new Date().toISOString(),
         });
         res.status(201).json({ id: docRef.id, ...data });
+
+        // Broadcast to all users
+        broadcastToAllUsers(
+            'New Package Available',
+            `Discover our latest grooming package: ${data.name}!`,
+            'new_package',
+            docRef.id
+        );
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -122,6 +131,14 @@ const createStyle = async (req, res) => {
             createdAt: new Date().toISOString(),
         });
         res.status(201).json({ id: docRef.id, ...data });
+
+        // Broadcast to all users
+        broadcastToAllUsers(
+            'New Style Alert!',
+            `Fresh looks just added: ${data.name}. Book your transformation now!`,
+            'new_style',
+            docRef.id
+        );
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

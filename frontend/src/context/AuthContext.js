@@ -95,6 +95,13 @@ export const AuthProvider = ({ children }) => {
 
     const forgotPassword = async (email) => {
         try {
+            const { checkEmailExists } = require('../services/api');
+            const { data } = await checkEmailExists(email);
+
+            if (!data.exists) {
+                throw new Error('This email is not registered with us.');
+            }
+
             await sendPasswordResetEmail(auth, email);
         } catch (error) {
             console.error('Password reset error:', error);

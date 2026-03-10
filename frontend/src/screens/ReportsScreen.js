@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { FileDown, Users, Calendar, DollarSign, ArrowLeft, BarChart } from 'lucide-react-native';
-import { db } from '../config/firebase';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { FileDown, Users, Calendar, DollarSign, ArrowLeft, BarChart, Scissors, Package, LayoutGrid } from 'lucide-react-native';
+import { getAdminAnalytics, getAllAppointments } from '../services/api';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
@@ -18,31 +17,40 @@ export default function ReportsScreen({ navigation }) {
         totalBookings: 0,
         completedBookings: 0,
         totalRevenue: 0,
-        totalUsers: 0
+        totalUsers: 0,
+        totalPackages: 0,
+        totalStyles: 0
     });
+    const [allAppointments, setAllAppointments] = useState([]);
+    const [filteredStats, setFilteredStats] = useState(null);
+    const [filter, setFilter] = useState('All Time'); // 'Today' | 'This Month' | 'This Year' | 'All Time'
     const [exporting, setExporting] = useState(false);
 
     useEffect(() => {
         fetchReports();
     }, []);
 
+    useEffect(() => {
+        applyFilter();
+    }, [filter, allAppointments]);
+
     const fetchReports = async () => {
         try {
             setLoading(true);
-            const appointmentsSnapshot = await getDocs(query(collection(db, 'appointments'), orderBy('createdAt', 'desc')));
-            const usersSnapshot = await getDocs(collection(db, 'users'));
-
-            const appointments = appointmentsSnapshot.docs.map(doc => doc.data());
-
-            const completed = appointments.filter(a => a.status?.toLowerCase() === 'completed');
-            const revenue = completed.reduce((sum, a) => sum + (Number(a.price) || 0), 0);
+            const [{ data: analytics }, { data: appointments }] = await Promise.all([
+                getAdminAnalytics(),
+                getAllAppointments()
+            ]);
 
             setStats({
                 totalBookings: appointments.length,
-                completedBookings: completed.length,
-                totalRevenue: revenue,
-                totalUsers: usersSnapshot.size
+                completedBookings: analytics.completed,
+                totalRevenue: analytics.totalRevenue,
+                totalUsers: analytics.totalUsers,
+                totalPackages: analytics.totalPackages,
+                totalStyles: analytics.totalStyles
             });
+            setAllAppointments(appointments);
         } catch (error) {
             console.error('Error fetching reports:', error);
             Alert.alert('Error', 'Failed to load report data');
@@ -51,16 +59,42 @@ export default function ReportsScreen({ navigation }) {
         }
     };
 
+    const applyFilter = () => {
+        if (filter === 'All Time') {
+            setFilteredStats(null);
+            return;
+        }
+
+        const now = new Date();
+        let start = new Date();
+
+        if (filter === 'Today') {
+            start.setHours(0, 0, 0, 0);
+        } else if (filter === 'This Month') {
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else if (filter === 'This Year') {
+            start = new Date(now.getFullYear(), 0, 1);
+        }
+
+        const filtered = allAppointments.filter(a => {
+            const date = new Date(a.createdAt || a.date);
+            return date >= start;
+        });
+
+        const completed = filtered.filter(a => a.status?.toLowerCase() === 'completed');
+        const revenue = completed.reduce((sum, a) => sum + (Number(a.price) || 0), 0);
+
+        setFilteredStats({
+            totalBookings: filtered.length,
+            completedBookings: completed.length,
+            totalRevenue: revenue
+        });
+    };
+
     const exportToCSV = async () => {
         try {
             setExporting(true);
-            const snapshot = await getDocs(query(collection(db, 'appointments'), orderBy('createdAt', 'desc')));
-            const appointments = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-
-            if (appointments.length === 0) {
+            if (allAppointments.length === 0) {
                 Alert.alert('Info', 'No data to export');
                 return;
             }
@@ -69,7 +103,7 @@ export default function ReportsScreen({ navigation }) {
             let csvContent = 'ID,User,Email,BarberID,Date,Time,Price,Status,CreatedAt\n';
 
             // CSV Body
-            appointments.forEach(a => {
+            allAppointments.forEach(a => {
                 const row = [
                     a.id,
                     `"${a.userName || 'N/A'}"`,
@@ -114,6 +148,8 @@ export default function ReportsScreen({ navigation }) {
         </View>
     );
 
+    const activeStats = filteredStats || stats;
+
     return (
         <View style={styles.container}>
             <LinearGradient
@@ -123,7 +159,10 @@ export default function ReportsScreen({ navigation }) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <ArrowLeft color={COLORS.text} size={24} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Business Reports</Text>
+                <View>
+                    <Text style={styles.headerTitle}>Business Reports</Text>
+                    <Text style={styles.headerSub}>Real-time performance metrics</Text>
+                </View>
             </LinearGradient>
 
             {loading ? (
@@ -132,22 +171,34 @@ export default function ReportsScreen({ navigation }) {
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content}>
+                    <View style={styles.filterRow}>
+                        {['Today', 'This Month', 'This Year', 'All Time'].map((f) => (
+                            <TouchableOpacity
+                                key={f}
+                                style={[styles.filterChip, filter === f && styles.activeChip]}
+                                onPress={() => setFilter(f)}
+                            >
+                                <Text style={[styles.filterText, filter === f && styles.activeFilterText]}>{f}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
                     <View style={styles.grid}>
                         <StatCard
                             title="Total Bookings"
-                            value={stats.totalBookings}
+                            value={activeStats.totalBookings}
                             icon={Calendar}
                             color="#2196F3"
                         />
                         <StatCard
                             title="Completed"
-                            value={stats.completedBookings}
+                            value={activeStats.completedBookings}
                             icon={BarChart}
                             color="#4CAF50"
                         />
                         <StatCard
-                            title="Total Revenue"
-                            value={stats.totalRevenue}
+                            title="Revenue"
+                            value={activeStats.totalRevenue.toLocaleString()}
                             icon={DollarSign}
                             color="#FFC107"
                             suffix=" ETB"
@@ -158,11 +209,23 @@ export default function ReportsScreen({ navigation }) {
                             icon={Users}
                             color="#E91E63"
                         />
+                        <StatCard
+                            title="Premium Packages"
+                            value={stats.totalPackages}
+                            icon={Package}
+                            color="#9C27B0"
+                        />
+                        <StatCard
+                            title="Haircut Styles"
+                            value={stats.totalStyles}
+                            icon={Scissors}
+                            color="#FF5722"
+                        />
                     </View>
 
                     <View style={styles.actionSection}>
                         <Text style={styles.sectionTitle}>Data Portability</Text>
-                        <Text style={styles.sectionDesc}>Export your business data to CSV for offline analysis and accounting.</Text>
+                        <Text style={styles.sectionDesc}>Export all your business data to CSV for offline analysis and accounting.</Text>
 
                         <TouchableOpacity
                             style={styles.exportBtn}
@@ -178,7 +241,7 @@ export default function ReportsScreen({ navigation }) {
                                 ) : (
                                     <>
                                         <FileDown color="#FFF" size={20} />
-                                        <Text style={styles.btnText}>Export Bookings to CSV</Text>
+                                        <Text style={styles.btnText}>Export All to CSV</Text>
                                     </>
                                 )}
                             </LinearGradient>
@@ -194,9 +257,15 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     header: { paddingHorizontal: 20, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
     backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.card, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-    headerTitle: { fontSize: 22, fontWeight: 'bold', color: COLORS.text },
+    headerTitle: { fontSize: 24, fontWeight: 'bold', color: COLORS.text },
+    headerSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     content: { padding: 20 },
+    filterRow: { flexDirection: 'row', marginBottom: 20, gap: 8 },
+    filterChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: COLORS.card, borderWidth: 1, borderColor: '#333' },
+    activeChip: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    filterText: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600' },
+    activeFilterText: { color: COLORS.background },
     grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
     statCard: {
         width: (width - 50) / 2,

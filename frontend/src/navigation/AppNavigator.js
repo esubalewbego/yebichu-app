@@ -15,6 +15,8 @@ import AdminBookingsScreen from '../screens/AdminBookingsScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import AboutScreen from '../screens/AboutScreen';
 import ReportsScreen from '../screens/ReportsScreen';
+import NotificationListScreen from '../screens/NotificationListScreen';
+import ManageDiscountsScreen from '../screens/ManageDiscountsScreen';
 
 const Stack = createStackNavigator();
 
@@ -31,6 +33,7 @@ export default function AppNavigator() {
                     <Stack.Screen name="Chat" component={ChatScreen} />
                     <Stack.Screen name="EditProfile" component={EditProfileScreen} />
                     <Stack.Screen name="About" component={AboutScreen} />
+                    <Stack.Screen name="Notifications" component={NotificationListScreen} />
 
                     {/* Role-Specific Private Screens */}
                     {user.role === 'admin' && (
@@ -42,6 +45,7 @@ export default function AppNavigator() {
                             <Stack.Screen name="AdminBookings" component={AdminBookingsScreen} />
                             <Stack.Screen name="MoreMenu" component={ManageMoreScreen} />
                             <Stack.Screen name="Reports" component={ReportsScreen} />
+                            <Stack.Screen name="Discounts" component={ManageDiscountsScreen} />
                         </>
                     )}
 
