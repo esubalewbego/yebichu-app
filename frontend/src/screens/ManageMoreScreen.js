@@ -23,7 +23,7 @@ export default function ManageMoreScreen({ navigation }) {
             subtitle: 'View detailed business metrics',
             icon: BarChart2,
             color: '#2196F3',
-            onPress: () => { } // Placeholder
+            onPress: () => navigation.navigate('Reports')
         },
         {
             title: 'System Settings',

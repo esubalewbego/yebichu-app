@@ -14,6 +14,7 @@ import ManageMoreScreen from '../screens/ManageMoreScreen';
 import AdminBookingsScreen from '../screens/AdminBookingsScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import AboutScreen from '../screens/AboutScreen';
+import ReportsScreen from '../screens/ReportsScreen';
 
 const Stack = createStackNavigator();
 
@@ -40,6 +41,7 @@ export default function AppNavigator() {
                             <Stack.Screen name="ManageStyles" component={ManageStylesScreen} />
                             <Stack.Screen name="AdminBookings" component={AdminBookingsScreen} />
                             <Stack.Screen name="MoreMenu" component={ManageMoreScreen} />
+                            <Stack.Screen name="Reports" component={ReportsScreen} />
                         </>
                     )}
 

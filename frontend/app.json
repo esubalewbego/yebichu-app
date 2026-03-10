@@ -41,6 +41,9 @@
             "DEFAULT"
           ]
         }
+      ],
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
@@ -52,6 +55,12 @@
           "photosPermission": "The app needs access to your photos to let you upload showcase images for services and styles."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e29fe70a-3b51-427c-b592-893564a1c818"
+      }
+    },
+    "owner": "bastt"
   }
 }
