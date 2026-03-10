@@ -19,6 +19,7 @@ router.patch('/profile/:uid/push-token', authenticate, updatePushToken);
 // Admin routes for user management
 router.get('/users', authenticate, authorizeAdmin, getAllUsers);
 router.patch('/users/:id/role', authenticate, authorizeAdmin, updateUserRole);
+router.delete('/users/:id', authenticate, deleteUser);
 router.post('/wishlist/toggle', authenticate, toggleWishlist);
 
 module.exports = router;

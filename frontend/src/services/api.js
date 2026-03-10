@@ -124,4 +124,6 @@ export const createDiscount = (data) => api.post('/discounts', data);
 export const updateDiscount = (id, data) => api.put(`/discounts/${id}`, data);
 export const deleteDiscount = (id) => api.delete(`/discounts/${id}`);
 
+export const deleteAccount = (id) => api.delete(`/auth/users/${id}`);
+
 export default api;

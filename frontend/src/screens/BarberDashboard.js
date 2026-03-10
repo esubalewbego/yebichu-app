@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, ScrollView } from 'react-native';
-import { Scissors, Clock, CheckCircle, MessageSquare, TrendingUp, DollarSign, Award } from 'lucide-react-native';
+import { Scissors, Clock, CheckCircle, XCircle, ChevronRight, Star, DollarSign, TrendingUp, MessageSquare, Bell } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
@@ -195,6 +195,12 @@ export default function BarberDashboard({ navigation }) {
                             style={[styles.logoutBtn, { marginRight: 10, borderColor: COLORS.primary + '40' }]}
                         >
                             <MessageSquare color={COLORS.primary} size={18} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('Notifications')}
+                            style={[styles.logoutBtn, { marginRight: 10, borderColor: COLORS.textSecondary + '40' }]}
+                        >
+                            <Bell color={COLORS.text} size={18} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
                             <Text style={styles.logoutText}>Logout</Text>

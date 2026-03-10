@@ -126,16 +126,24 @@ export default function EditProfileScreen({ navigation }) {
     const handleDeleteAccount = () => {
         Alert.alert(
             "Delete Account",
-            "Are you absolutely sure you want to delete your account? This action cannot be undone.",
+            "Are you absolutely sure you want to delete your account? This action cannot be undone and will remove all your data.",
             [
                 { text: "Cancel", style: "cancel" },
                 {
-                    text: "Delete",
+                    text: "Delete My Account",
                     style: "destructive",
                     onPress: async () => {
-                        // In a real app, you would call your backend delete logic here
-                        // For now we'll simulate logging out as the deletion mechanism until the backend route is built
-                        await logout();
+                        setLoading(true);
+                        try {
+                            await deleteAccount(user.uid);
+                            await logout();
+                            Alert.alert('Success', 'Your account has been permanently deleted.');
+                        } catch (error) {
+                            console.error('Deletion failed:', error);
+                            Alert.alert('Error', 'Failed to delete account. Please contact support.');
+                        } finally {
+                            setLoading(false);
+                        }
                     }
                 }
             ]

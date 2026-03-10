@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { getAllAppointments, updateAppointmentStatus, getAdminAnalytics, getBarbersList, assignBarber, deleteAppointment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus, Trash2, MessageSquare, ShieldCheck } from 'lucide-react-native';
+import { CheckCircle, XCircle, Clock, Scissors, Calendar, Package, Settings, ChevronRight, RefreshCw, TrendingUp, DollarSign, Users, BarChart3, UserPlus, Trash2, MessageSquare, ShieldCheck, Bell } from 'lucide-react-native';
 
 const StatusBadge = ({ status }) => {
     const bgColor = status === 'completed' ? '#4CAF5020' : status === 'pending' ? '#FFC10720' : '#F4433620';
@@ -152,6 +152,13 @@ export default function AdminDashboard({ navigation }) {
                             onPress={() => navigation.navigate('Messages')}
                         >
                             <MessageSquare color={COLORS.text} size={20} />
+                            <View style={styles.unreadDot} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.actionCircle}
+                            onPress={() => navigation.navigate('Notifications')}
+                        >
+                            <Bell color={COLORS.text} size={20} />
                             <View style={styles.unreadDot} />
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.actionCircle} onPress={fetchData}>

@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Plus, Trash2, Edit2, Tag, Percent, Calendar, FileText } from 'lucide-react-native';
 import { COLORS } from '../theme/colors';
-import { getDiscounts, createOfDiscount, updateDiscount, deleteDiscount, createDiscount } from '../services/api';
+import { getDiscounts, updateDiscount, deleteDiscount, createDiscount } from '../services/api';
 import Button from '../components/Button';
 
 export default function ManageDiscountsScreen({ navigation }) {
