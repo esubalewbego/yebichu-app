@@ -1,14 +1,20 @@
 import 'react-native-gesture-handler';
 import { NativeModules } from 'react-native';
 
-// Critical polyfill for React Native 0.76+ compatibility with legacy modules
-if (NativeModules && !NativeModules.EventEmitter) {
-    NativeModules.EventEmitter = {
-        addListener: () => ({ remove: () => { } }),
-        removeListeners: () => { },
-        removeAllListeners: () => { },
-        emit: () => { },
-    };
+// Universal polyfill for EventEmitter missing in Bridgeless/New Architecture environments
+if (NativeModules) {
+    if (!NativeModules.EventEmitter) {
+        NativeModules.EventEmitter = {
+            addListener: () => ({ remove: () => { } }),
+            removeListeners: () => { },
+            removeAllListeners: () => { },
+            emit: () => { },
+        };
+    }
+    // Ensure global visibility for sensitive legacy modules
+    if (typeof global.EventEmitter === 'undefined') {
+        global.EventEmitter = NativeModules.EventEmitter;
+    }
 }
 
 import { registerRootComponent } from 'expo';
