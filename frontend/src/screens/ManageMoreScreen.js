@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { Tag, BarChart2, Settings, ChevronRight, LogOut, Info, Shield, HelpCircle, Bell, Users } from 'lucide-react-native';
+import { Tag, BarChart2, Settings, ChevronRight, LogOut, Info, Shield, HelpCircle, Bell, Users, Percent } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 
 export default function ManageMoreScreen({ navigation }) {

@@ -6,9 +6,12 @@ import { COLORS } from '../theme/colors';
 import { Bell, ChevronLeft, CheckCircle2, Clock, Calendar, Scissors, Info, Trash2 } from 'lucide-react-native';
 import { getNotifications, markNotificationRead } from '../services/api';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
 
 export default function NotificationListScreen({ navigation }) {
     const insets = useSafeAreaInsets();
+    const { user } = useAuth();
+    const role = user?.role?.toLowerCase();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -39,16 +42,25 @@ export default function NotificationListScreen({ navigation }) {
         }
 
         // Deep navigation logic
-        if (item.type?.startsWith('booking_')) {
-            // Depending on role, navigate to History or AdminBookings
-            // For now, let's just go back if we can't determine role, 
-            // but usually we'd navigate to the detail.
-            // Since we're in a stack, we can navigate.
-            if (item.entityId) {
-                // Navigation logic based on type
-                // navigation.navigate('AppointmentDetail', { id: item.entityId }); 
-                // or similar. For now, let's keep it simple.
+        const type = item.type?.toLowerCase();
+
+        if (type?.startsWith('booking_')) {
+            if (role === 'admin') {
+                navigation.navigate('AdminBookings');
+            } else if (role === 'barber') {
+                navigation.navigate('MainTabs', { screen: 'Active Jobs' });
+            } else {
+                navigation.navigate('MainTabs', { screen: 'My Bookings' });
             }
+        } else if (type === 'chat_message') {
+            navigation.navigate('Chat', {
+                conversationId: item.entityId,
+                userName: item.title.replace('New Message from ', '') || 'Chat'
+            });
+        } else if (type === 'new_user' && role === 'admin') {
+            navigation.navigate('MainTabs', { screen: 'Users' });
+        } else if (type === 'new_package' || type === 'new_style') {
+            navigation.navigate('MainTabs', { screen: 'Home' });
         }
     };
 

@@ -145,7 +145,13 @@ export default function AdminBookingsScreen({ navigation }) {
             </LinearGradient>
 
             <View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filterBar}
+                    decelerationRate="fast"
+                    keyboardShouldPersistTaps="handled"
+                >
                     {['all', 'pending', 'assigned', 'completed', 'cancelled'].map(f => (
                         <TouchableOpacity
                             key={f}
