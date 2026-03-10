@@ -1,17 +1,27 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-    }),
-});
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+if (!isExpoGo) {
+    Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldPlaySound: true,
+            shouldSetBadge: false,
+        }),
+    });
+}
 
 export async function registerForPushNotificationsAsync() {
     let token;
+
+    if (isExpoGo) {
+        console.log('Push notifications disabled in Expo Go. Use a development build.');
+        return undefined;
+    }
 
     if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
