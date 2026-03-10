@@ -45,6 +45,7 @@
     },
     "plugins": [
       "expo-web-browser",
+      "expo-notifications",
       [
         "expo-image-picker",
         {
