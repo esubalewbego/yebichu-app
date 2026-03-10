@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Yebichu Barbershop",
+    "slug": "yebichu-barbershop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
