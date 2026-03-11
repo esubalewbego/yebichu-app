@@ -38,4 +38,11 @@ yarn-error.*
 
 # generated native folders
 /ios
-/android
+# Un-ignoring android to preserve SDK 55 native fixes (as requested)
+# /android 
+/android/local.properties
+/android/.gradle
+/android/build
+/android/app/build
+/android/app/debug
+/android/app/release

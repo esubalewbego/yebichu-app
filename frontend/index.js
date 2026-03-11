@@ -50,6 +50,21 @@ LogBox.ignoreLogs([
     'The current activity is no longer available',
 ]);
 
+// Handle unhandled promise rejections for ExpoKeepAwake
+if (!global.__rejectionHandlerAdded) {
+    const originalHandler = global.Promise && global.Promise._onUnhandledRejection;
+    if (global.Promise) {
+        global.Promise._onUnhandledRejection = (id, rejection) => {
+            const message = rejection && rejection.message ? rejection.message : String(rejection);
+            if (message.includes('ExpoKeepAwake.activate') || message.includes('The current activity is no longer available')) {
+                return;
+            }
+            if (originalHandler) originalHandler(id, rejection);
+        };
+    }
+    global.__rejectionHandlerAdded = true;
+}
+
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
