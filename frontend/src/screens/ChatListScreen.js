@@ -23,7 +23,7 @@ export default function ChatListScreen({ navigation }) {
             let participantsToMatch = [uid];
             try {
                 const userSnap = await getDoc(fsDoc(db, 'users', uid));
-                if (userSnap.exists() && userSnap.data().role === 'admin') {
+                if (userSnap.exists() && userSnap.data().role?.toLowerCase() === 'admin') {
                     participantsToMatch.push('admin');
                 }
             } catch (err) {
