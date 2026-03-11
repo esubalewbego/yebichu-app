@@ -307,12 +307,15 @@ const getNotifications = async (req, res) => {
         // 2. Fetch remaining notifications
         const snapshot = await db.collection('notifications')
             .where('userId', '==', uid)
-            .orderBy('createdAt', 'desc')
-            .limit(50)
             .get();
 
-        const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.status(200).json(notifications);
+        let notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Sort in-memory to avoid requiring a Firestore Compound Index
+        notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+
+        // Return latest 50
+        res.status(200).json(notifications.slice(0, 50));
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
