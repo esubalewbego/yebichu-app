@@ -75,7 +75,7 @@ export default function SignupScreen({ navigation }) {
                 style={StyleSheet.absoluteFill}
             />
 
-            <View style={styles.header}>
+            <View style={[styles.header, { marginTop: insets.top }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <ArrowLeft color={COLORS.text} size={24} />
                 </TouchableOpacity>
