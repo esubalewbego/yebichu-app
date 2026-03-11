@@ -174,7 +174,7 @@ export default function BookingScreen({ route, navigation }) {
                 </View>
             </ScrollView>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
                 <View style={styles.priceRow}>
                     <Text style={styles.totalLabel}>Total Price</Text>
                     <Text style={styles.totalPrice}>${item.price}</Text>
