@@ -202,9 +202,6 @@ export default function BarberDashboard({ navigation }) {
                         >
                             <Bell color={COLORS.text} size={18} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-                            <Text style={styles.logoutText}>Logout</Text>
-                        </TouchableOpacity>
                     </View>
                 </View>
 
