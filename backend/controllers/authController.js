@@ -5,6 +5,7 @@ const { notifyAdmins } = require('../utils/notificationHelper');
 const signup = async (req, res) => {
     try {
         const { email, password, fullName, username } = req.body;
+        let profileImageUrl = req.body.profileImageUrl || null;
 
         if (!fullName || !username) {
             return res.status(400).json({ error: 'Full Name and Username are required' });
@@ -23,8 +24,7 @@ const signup = async (req, res) => {
             displayName: fullName,
         });
 
-        // Handle optional profile image upload
-        let profileImageUrl = null;
+        // Handle optional profile image upload (backward compatibility)
         if (req.file) {
             try {
                 profileImageUrl = await uploadToCloudinary(req.file.buffer, 'yebichu_profiles');
@@ -40,7 +40,7 @@ const signup = async (req, res) => {
             username: username.toLowerCase(),
             email,
             role: userRole,
-            profileImageUrl,
+            profileImageUrl: profileImageUrl || '',
             wishlist: [],
             createdAt: new Date().toISOString(),
         });
@@ -72,7 +72,7 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { fullName, username, bio, phone } = req.body;
+        const { fullName, username, bio, phone, profileImageUrl } = req.body;
 
         // Security Check: Users can only update their own profile unless they are an admin
         if (req.user.uid !== userId && req.user.role !== 'admin') {
@@ -83,6 +83,7 @@ const updateUserProfile = async (req, res) => {
         if (fullName) updateData.fullName = fullName;
         if (bio !== undefined) updateData.bio = bio;
         if (phone !== undefined) updateData.phone = phone;
+        if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
 
         // Ensure username is unique if changing
         if (username) {
