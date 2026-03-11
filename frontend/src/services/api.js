@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://10.18.47.33:5000/api'; // Use your computer's IP (detected: 10.18.47.33)
-// Fallback for Android Emulator: http://10.0.2.2:5000/api
+const API_BASE_URL = 'http://10.18.47.33:5000/api'; // LOCAL: Use your computer's IP (detected: 10.18.47.33)
+// const API_BASE_URL = 'https://yebichu-backend.onrender.com/api'; // PRODUCTION: Replace with your Render URL
 
 const api = axios.create({
     baseURL: API_BASE_URL,
