@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import CustomButton from '../components/Button';
+import { uploadImage } from '../services/api';
 import { Mail, Lock, User, ChevronLeft, ArrowLeft, ShieldCheck, Smartphone, Scissors, Camera } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,21 +14,58 @@ export default function SignupScreen({ navigation }) {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [profileImage, setProfileImage] = useState(null);
+    const [profileImageUrl, setProfileImageUrl] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [loading, setLoading] = useState(false);
     const insets = useSafeAreaInsets();
     const { signup } = useAuth();
 
     const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaType.IMAGE,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.5,
-        });
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+            return;
+        }
 
-        if (!result.canceled) {
-            setProfileImage(result.assets[0].uri);
+        try {
+            let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.5,
+            });
+
+            if (!result.canceled) {
+                await uploadImageToBackend(result.assets[0]);
+            }
+        } catch (error) {
+            console.error('Pick image error:', error);
+            Alert.alert('Error', 'Failed to open image gallery.');
+        }
+    };
+
+    const uploadImageToBackend = async (asset) => {
+        setUploadingImage(true);
+        try {
+            const formDataToUpload = new FormData();
+            const filename = asset.uri.split('/').pop();
+            const match = /\.(\w+)$/.exec(filename);
+            const ext = match ? match[1] : 'jpg';
+            const type = `image/${ext}`;
+
+            formDataToUpload.append('image', {
+                uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+                type: type,
+                name: filename || 'upload.jpg',
+            });
+
+            const { data } = await uploadImage(formDataToUpload);
+            setProfileImageUrl(data.url);
+        } catch (error) {
+            console.error('Image upload failed:', error);
+            Alert.alert('Upload Error', 'Failed to upload the image.');
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -38,24 +76,15 @@ export default function SignupScreen({ navigation }) {
         }
         setLoading(true);
         try {
-            const formData = new FormData();
-            formData.append('fullName', fullName);
-            formData.append('username', username);
-            formData.append('email', email);
-            formData.append('password', password);
+            const signupData = {
+                fullName,
+                username,
+                email,
+                password,
+                profileImageUrl: profileImageUrl || ''
+            };
 
-            if (profileImage) {
-                const filename = profileImage.split('/').pop();
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1] === 'jpg' ? 'jpeg' : match[1]}` : `image`;
-                formData.append('profileImage', {
-                    uri: profileImage,
-                    name: filename,
-                    type,
-                });
-            }
-
-            await signup(formData);
+            await signup(signupData);
 
             Alert.alert('Success', `Account created successfully!`, [
                 { text: 'Login Now', onPress: () => navigation.navigate('Login') }
@@ -101,9 +130,11 @@ export default function SignupScreen({ navigation }) {
 
                     <View style={styles.form}>
                         <View style={styles.imagePickerContainer}>
-                            <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
-                                {profileImage ? (
-                                    <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                            <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage} disabled={uploadingImage}>
+                                {uploadingImage ? (
+                                    <ActivityIndicator size="small" color={COLORS.primary} />
+                                ) : profileImageUrl ? (
+                                    <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
                                 ) : (
                                     <View style={styles.imagePlaceholder}>
                                         <Camera color={COLORS.primary} size={32} />

@@ -254,8 +254,15 @@ export default function HomeScreen({ navigation }) {
                                                     style={styles.slideOverlay}
                                                 >
                                                     <View style={styles.slideTop}>
-                                                        <View style={styles.priceTag}>
-                                                            <Text style={styles.priceText}>${item.price}</Text>
+                                                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                                                            <View style={styles.priceTag}>
+                                                                <Text style={styles.priceText}>${item.price}</Text>
+                                                            </View>
+                                                            {discounts.length > 0 && (
+                                                                <View style={[styles.priceTag, { backgroundColor: '#FFD700' }]}>
+                                                                    <Text style={[styles.priceText, { fontSize: 12 }]}>-{discounts[0].percentage}%</Text>
+                                                                </View>
+                                                            )}
                                                         </View>
                                                         <TouchableOpacity
                                                             onPress={(e) => {

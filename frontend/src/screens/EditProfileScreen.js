@@ -6,7 +6,7 @@ import { COLORS } from '../theme/colors';
 import { ArrowLeft, User, Mail, Phone, FileText, Camera, Trash2, Lock } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
-import { updateUserProfile, updatePassword } from '../services/api';
+import { updateUserProfile, updatePassword, uploadImage } from '../services/api';
 import CustomButton from '../components/Button';
 
 export default function EditProfileScreen({ navigation }) {
@@ -25,6 +25,7 @@ export default function EditProfileScreen({ navigation }) {
 
     const [loading, setLoading] = useState(false);
     const [passwordLoading, setPasswordLoading] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -39,16 +40,52 @@ export default function EditProfileScreen({ navigation }) {
     }, [user]);
 
     const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaType.IMAGE,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.5,
-        });
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+            return;
+        }
 
-        if (!result.canceled) {
-            setProfileImage(result.assets[0].uri);
+        try {
+            let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.5,
+            });
+
+            if (!result.canceled) {
+                await uploadImageToBackend(result.assets[0]);
+            }
+        } catch (error) {
+            console.error('Pick image error:', error);
+            Alert.alert('Error', 'Failed to open image gallery.');
+        }
+    };
+
+    const uploadImageToBackend = async (asset) => {
+        setUploadingImage(true);
+        try {
+            const formDataToUpload = new FormData();
+            const filename = asset.uri.split('/').pop();
+            const match = /\.(\w+)$/.exec(filename);
+            const ext = match ? match[1] : 'jpg';
+            const type = `image/${ext}`;
+
+            formDataToUpload.append('image', {
+                uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+                type: type,
+                name: filename || 'upload.jpg',
+            });
+
+            const { data } = await uploadImage(formDataToUpload);
+            setProfileImage(data.url);
             setNewImageSelected(true);
+        } catch (error) {
+            console.error('Image upload failed:', error);
+            Alert.alert('Upload Error', 'Failed to upload the image.');
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -60,24 +97,15 @@ export default function EditProfileScreen({ navigation }) {
 
         setLoading(true);
         try {
-            const formData = new FormData();
-            formData.append('fullName', fullName);
-            formData.append('username', username);
-            formData.append('bio', bio);
-            formData.append('phone', phone);
+            const payload = {
+                fullName,
+                username,
+                bio,
+                phone,
+                profileImageUrl: profileImage || user.profileImageUrl
+            };
 
-            if (newImageSelected && profileImage) {
-                const filename = profileImage.split('/').pop();
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1] === 'jpg' ? 'jpeg' : match[1]}` : `image`;
-                formData.append('profileImage', {
-                    uri: profileImage,
-                    name: filename,
-                    type,
-                });
-            }
-
-            const { data } = await updateUserProfile(user.uid, formData);
+            const { data } = await updateUserProfile(user.uid, payload);
 
             // Update local context
             updateUser({
@@ -165,8 +193,10 @@ export default function EditProfileScreen({ navigation }) {
             <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false}>
 
                 <View style={styles.imagePickerContainer}>
-                    <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
-                        {profileImage ? (
+                    <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage} disabled={uploadingImage}>
+                        {uploadingImage ? (
+                            <ActivityIndicator size="small" color={COLORS.primary} />
+                        ) : profileImage ? (
                             <Image source={{ uri: profileImage }} style={styles.profileImage} />
                         ) : (
                             <View style={styles.imagePlaceholder}>
