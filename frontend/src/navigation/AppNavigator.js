@@ -36,7 +36,7 @@ export default function AppNavigator() {
                     <Stack.Screen name="Notifications" component={NotificationListScreen} />
 
                     {/* Role-Specific Private Screens */}
-                    {user.role === 'admin' && (
+                    {user.role?.toLowerCase() === 'admin' && (
                         <>
                             <Stack.Screen name="ChatList" component={ChatListScreen} />
                             <Stack.Screen name="Services" component={ManagePackagesScreen} />
@@ -49,7 +49,7 @@ export default function AppNavigator() {
                         </>
                     )}
 
-                    {(user.role === 'user' || user.role === 'admin' || user.role === 'barber') && (
+                    {(user.role?.toLowerCase() === 'admin' || user.role?.toLowerCase() === 'barber' || user.role?.toLowerCase() === 'user') && (
                         <>
                             <Stack.Screen name="Booking" component={BookingScreen} />
                             <Stack.Screen name="Payment" component={PaymentScreen} />
