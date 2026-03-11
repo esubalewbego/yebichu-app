@@ -43,8 +43,11 @@ console.warn = (...args) => {
     originalWarn(...args);
 };
 
-// Ignore via LogBox as well just in case
-LogBox.ignoreLogs(['InteractionManager has been deprecated']);
+// Ignore specific deprecation and dev-client errors
+LogBox.ignoreLogs([
+    'InteractionManager has been deprecated',
+    "Error: Call to function 'ExpoKeepAwake.activate' has been rejected",
+]);
 
 import App from './App';
 

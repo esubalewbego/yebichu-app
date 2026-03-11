@@ -40,7 +40,7 @@ export default function EditProfileScreen({ navigation }) {
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ImagePicker.MediaType.IMAGE,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.5,
