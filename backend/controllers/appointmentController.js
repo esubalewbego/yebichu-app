@@ -293,18 +293,26 @@ const getNotifications = async (req, res) => {
         const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
 
         // 1. Cleanup: Delete notifications older than 2 hours
-        const oldDocs = await db.collection('notifications')
+        // We filter by userId only to avoid needing a Firestore composite index for 'createdAt' inequality
+        const userDocs = await db.collection('notifications')
             .where('userId', '==', uid)
-            .where('createdAt', '<', twoHoursAgo)
             .get();
 
-        if (!oldDocs.empty) {
+        if (!userDocs.empty) {
             const batch = db.batch();
-            oldDocs.docs.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
+            let hasDeletions = false;
+            userDocs.docs.forEach(doc => {
+                const data = doc.data();
+                if (data.createdAt < twoHoursAgo) {
+                    batch.delete(doc.ref);
+                    hasDeletions = true;
+                }
+            });
+            if (hasDeletions) await batch.commit();
         }
 
         // 2. Fetch remaining notifications
+        // Again, filter by userId only to avoid index requirements
         const snapshot = await db.collection('notifications')
             .where('userId', '==', uid)
             .get();
