@@ -236,7 +236,11 @@ export default function HomeScreen({ navigation }) {
                                     <View style={styles.premiumSlide}>
                                         <TouchableOpacity
                                             style={styles.premiumCard}
-                                            onPress={() => navigation.navigate('Booking', { item, isPackage: !!item.isPackage })}
+                                            onPress={() => navigation.navigate('Booking', { 
+                                                item, 
+                                                isPackage: !!item.isPackage,
+                                                activeDiscount: discounts.length > 0 ? discounts[0] : null
+                                            })}
                                             activeOpacity={0.95}
                                         >
                                             <ImageBackground
@@ -254,14 +258,23 @@ export default function HomeScreen({ navigation }) {
                                                     style={styles.slideOverlay}
                                                 >
                                                     <View style={styles.slideTop}>
-                                                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                                                        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                                                             <View style={styles.priceTag}>
-                                                                <Text style={styles.priceText}>${item.price}</Text>
+                                                                <Text style={styles.priceText}>
+                                                                    ${discounts.length > 0 
+                                                                        ? (item.price * (1 - discounts[0].percentage / 100)).toFixed(2)
+                                                                        : item.price}
+                                                                </Text>
                                                             </View>
                                                             {discounts.length > 0 && (
                                                                 <View style={[styles.priceTag, { backgroundColor: '#FFD700' }]}>
                                                                     <Text style={[styles.priceText, { fontSize: 12 }]}>-{discounts[0].percentage}%</Text>
                                                                 </View>
+                                                            )}
+                                                            {discounts.length > 0 && (
+                                                                <Text style={{ color: 'rgba(255,255,255,0.5)', textDecorationLine: 'line-through', fontSize: 14 }}>
+                                                                    ${item.price}
+                                                                </Text>
                                                             )}
                                                         </View>
                                                         <TouchableOpacity

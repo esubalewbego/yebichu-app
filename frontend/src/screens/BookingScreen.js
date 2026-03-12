@@ -9,7 +9,10 @@ import { getBarbersList } from '../services/api';
 import CustomButton from '../components/Button';
 
 export default function BookingScreen({ route, navigation }) {
-    const { item, isPackage } = route.params;
+    const { item, isPackage, activeDiscount } = route.params;
+    const finalPrice = activeDiscount 
+        ? (item.price * (1 - activeDiscount.percentage / 100)).toFixed(2)
+        : item.price;
     const insets = useSafeAreaInsets();
     const today = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(today);
@@ -41,7 +44,8 @@ export default function BookingScreen({ route, navigation }) {
             item,
             date: selectedDate,
             time: selectedTime,
-            barberId: selectedBarber
+            barberId: selectedBarber,
+            activeDiscount
         });
     };
 
@@ -75,7 +79,14 @@ export default function BookingScreen({ route, navigation }) {
                                 {`${item.avgRating?.toFixed(1) || '0.0'} (${item.ratingCount || 0} reviews)`}
                             </Text>
                         </View>
-                        <Text style={styles.itemPrice}>${item.price}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Text style={styles.itemPrice}>${finalPrice}</Text>
+                            {activeDiscount && (
+                                <Text style={{ color: 'rgba(255,255,255,0.4)', textDecorationLine: 'line-through', fontSize: 14 }}>
+                                    ${item.price}
+                                </Text>
+                            )}
+                        </View>
                     </View>
                 </View>
 
@@ -177,7 +188,7 @@ export default function BookingScreen({ route, navigation }) {
             <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
                 <View style={styles.priceRow}>
                     <Text style={styles.totalLabel}>Total Price</Text>
-                    <Text style={styles.totalPrice}>${item.price}</Text>
+                    <Text style={styles.totalPrice}>${finalPrice}</Text>
                 </View>
                 <CustomButton title="Confirm & Pay" onPress={handleBooking} />
             </View>

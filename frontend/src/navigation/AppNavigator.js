@@ -1,6 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 import AuthNavigator from './AuthNavigator';
 import TabNavigator from './TabNavigator';
 import BookingScreen from '../screens/BookingScreen';
@@ -20,8 +21,21 @@ import ManageDiscountsScreen from '../screens/ManageDiscountsScreen';
 
 const Stack = createStackNavigator();
 
+import * as Notifications from 'expo-notifications';
+
 export default function AppNavigator() {
     const { user } = useAuth();
+    const navigation = useNavigation();
+
+    React.useEffect(() => {
+        const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+            const data = response.notification.request.content.data;
+            if (data?.screen) {
+                navigation.navigate(data.screen, data.params);
+            }
+        });
+        return () => subscription.remove();
+    }, [user]);
 
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>

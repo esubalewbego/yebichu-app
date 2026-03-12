@@ -29,9 +29,14 @@ allprojects {
 
   configurations.all {
     resolutionStrategy {
-      // Force stable androidx activity version to prevent BadParcelableException
-      force "androidx.activity:activity:1.9.3"
-      force "androidx.activity:activity-ktx:1.9.3"
+      // Force stable androidx activity version to prevent BadParcelableException and NoSuchMethodError
+      force "androidx.activity:activity:1.9.0"
+      force "androidx.activity:activity-ktx:1.9.0"
+      // Force compatible androidx.core version for SDK 35
+      force "androidx.core:core:1.15.0"
+      force "androidx.core:core-ktx:1.15.0"
+      // Force compatible androidx.browser version for SDK 35
+      force "androidx.browser:browser:1.8.0"
     }
   }
 }

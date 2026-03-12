@@ -10,7 +10,10 @@ import { initializePayment, verifyPayment, createAppointment } from '../services
 import { useAuth } from '../context/AuthContext';
 
 export default function PaymentScreen({ route, navigation }) {
-    const { item, date, time, barberId } = route.params;
+    const { item, date, time, barberId, activeDiscount } = route.params;
+    const finalPrice = activeDiscount 
+        ? (item.price * (1 - activeDiscount.percentage / 100)).toFixed(2)
+        : item.price;
     const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState(false);
     const [checkoutUrl, setCheckoutUrl] = useState(null);
@@ -31,10 +34,10 @@ export default function PaymentScreen({ route, navigation }) {
                     userName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
                     userEmail: user?.email || '',
                     barberId,
-                    item,
+                    item: { ...item, price: finalPrice }, // Store discounted price in appointment
                     date,
                     time,
-                    status: isBarber ? 'paid' : (barberId ? 'assigned' : 'pending'), // If barber selected, it's assigned, else pending
+                    status: isBarber ? 'paid' : (barberId ? 'assigned' : 'pending'),
                     tx_ref: txRef
                 });
                 setPaymentStatus('success');
@@ -55,7 +58,7 @@ export default function PaymentScreen({ route, navigation }) {
             const safeFirstName = (user?.displayName?.split(' ')[0] || 'Customer').trim();
             const safeLastName = (user?.displayName?.split(' ')[1] || 'User').trim();
             const safePhone = (user?.phoneNumber && user.phoneNumber.length >= 9) ? user.phoneNumber.trim() : '0900123456';
-            const safeAmount = item?.price ? Number(item.price).toString() : '100';
+            const safeAmount = finalPrice.toString();
 
             const paymentData = {
                 amount: safeAmount,
@@ -125,7 +128,7 @@ export default function PaymentScreen({ route, navigation }) {
                     userName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
                     userEmail: user?.email || '',
                     barberId,
-                    item,
+                    item: { ...item, price: finalPrice },
                     date,
                     time,
                     status: 'paid', // Keep as 'paid' because it was paid for via Chapa
@@ -177,14 +180,14 @@ export default function PaymentScreen({ route, navigation }) {
                             <Text style={styles.itemName}>{item.name}</Text>
                             <Text style={styles.itemTime}>{time}</Text>
                         </View>
-                        <Text style={styles.itemPrice}>${item.price}</Text>
+                        <Text style={styles.itemPrice}>${finalPrice}</Text>
                     </View>
 
                     <View style={styles.divider} />
 
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Grand Total</Text>
-                        <Text style={styles.totalAmount}>${item.price}</Text>
+                        <Text style={styles.totalAmount}>${finalPrice}</Text>
                     </View>
                 </View>
 
