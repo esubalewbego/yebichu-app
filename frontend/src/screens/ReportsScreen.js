@@ -7,6 +7,7 @@ import { FileDown, Users, Calendar, DollarSign, ArrowLeft, BarChart, Scissors, P
 import { getAdminAnalytics, getAllAppointments } from '../services/api';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as Print from 'expo-print';
 
 const { width } = Dimensions.get('window');
 
@@ -136,6 +137,79 @@ export default function ReportsScreen({ navigation }) {
         }
     };
 
+    const exportToPDF = async () => {
+        try {
+            setExporting(true);
+            if (allAppointments.length === 0) {
+                Alert.alert('Info', 'No data to export');
+                return;
+            }
+
+            const html = `
+                <html>
+                    <head>
+                        <style>
+                            body { font-family: 'Helvetica', sans-serif; padding: 20px; }
+                            h1 { color: #8B0000; text-align: center; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                            th { background-color: #8B0000; color: white; }
+                            tr:nth-child(even) { background-color: #f9f9f9; }
+                            .summary { margin-top: 30px; padding: 15px; background: #f5f5f5; border-radius: 8px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Yebichu Bookings Report</h1>
+                        <p>Generated on: ${new Date().toLocaleString()}</p>
+                        
+                        <div class="summary">
+                            <h3>Business Summary (${filter})</h3>
+                            <p>Total Bookings: ${activeStats.totalBookings}</p>
+                            <p>Completed: ${activeStats.completedBookings}</p>
+                            <p>Total Revenue: ${activeStats.totalRevenue.toLocaleString()} ETB</p>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allAppointments.map(a => `
+                                    <tr>
+                                        <td>${a.userName || 'N/A'}</td>
+                                        <td>${a.date || 'N/A'}</td>
+                                        <td>${a.time || 'N/A'}</td>
+                                        <td>${a.price || 0}</td>
+                                        <td>${a.status || 'pending'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </body>
+                </html>
+            `;
+
+            const { uri } = await Print.printToFileAsync({ html });
+            
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+            } else {
+                Alert.alert('Success', `PDF generated at: ${uri}`);
+            }
+        } catch (error) {
+            console.error('PDF Export error:', error);
+            Alert.alert('Error', 'Failed to generate PDF report');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const StatCard = ({ title, value, icon: Icon, color, suffix = '' }) => (
         <View style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
@@ -242,6 +316,26 @@ export default function ReportsScreen({ navigation }) {
                                     <>
                                         <FileDown color="#FFF" size={20} />
                                         <Text style={styles.btnText}>Export All to CSV</Text>
+                                    </>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.exportBtn, { marginTop: 15 }]}
+                            onPress={exportToPDF}
+                            disabled={exporting}
+                        >
+                            <LinearGradient
+                                colors={['#444', '#222']}
+                                style={styles.btnGradient}
+                            >
+                                {exporting ? (
+                                    <ActivityIndicator size="small" color="#FFF" />
+                                ) : (
+                                    <>
+                                        <FileDown color="#FFF" size={20} />
+                                        <Text style={styles.btnText}>Export All to PDF</Text>
                                     </>
                                 )}
                             </LinearGradient>

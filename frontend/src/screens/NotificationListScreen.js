@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
-import { Bell, ChevronLeft, CheckCircle2, Clock, Calendar, Scissors, Info, Trash2 } from 'lucide-react-native';
+import { Bell, ChevronLeft, CheckCircle2, Clock, Calendar, Scissors, Info, Trash2, MessageSquare, UserPlus, XCircle } from 'lucide-react-native';
 import { getNotifications, markNotificationRead, clearNotifications } from '../services/api';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
@@ -89,11 +89,15 @@ export default function NotificationListScreen({ navigation }) {
     };
 
     const getIcon = (type) => {
-        switch (type) {
-            case 'booking_new': return <Calendar color={COLORS.primary} size={20} />;
-            case 'booking_assigned': return <Scissors color={COLORS.primary} size={20} />;
+        const typeLower = type?.toLowerCase();
+        switch (typeLower) {
+            case 'booking_new': return <Calendar color="#2196F3" size={20} />;
+            case 'booking_assigned': return <Scissors color="#9C27B0" size={20} />;
             case 'booking_completed': return <CheckCircle2 color="#4CAF50" size={20} />;
-            case 'booking_update': return <Clock color={COLORS.primary} size={20} />;
+            case 'booking_cancelled': return <XCircle color="#F44336" size={20} />;
+            case 'booking_update': return <Clock color="#FF9800" size={20} />;
+            case 'chat_message': return <MessageSquare color={COLORS.primary} size={20} />;
+            case 'new_user': return <UserPlus color="#E91E63" size={20} />;
             default: return <Info color={COLORS.textSecondary} size={20} />;
         }
     };

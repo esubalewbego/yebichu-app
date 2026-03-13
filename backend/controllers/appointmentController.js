@@ -386,20 +386,21 @@ const cancelAppointmentByUser = async (req, res) => {
 
         await db.collection('appointments').doc(id).update({ status: 'cancelled' });
 
-        // --- PUSH NOTIFICATIONS ---
+        // --- PUSH & DB NOTIFICATIONS ---
         try {
-            const adminTokens = await getAdminTokens();
-            if (adminTokens.length > 0) {
-                await sendPushNotification(adminTokens, 'Booking Cancelled', `An appointment was cancelled by the client.`);
-            }
+            const { notifyAdmins, notifyUser } = require('../utils/notificationHelper');
+            const cancelTitle = 'Booking Cancelled';
+            const clientName = apptData.userName || 'A client';
+            const adminBody = `Appointment for ${clientName} was cancelled.`;
+            
+            await notifyAdmins(cancelTitle, adminBody, 'booking_cancelled', id);
+
             if (apptData.barberId) {
-                const barberToken = await getUserToken(apptData.barberId);
-                if (barberToken) {
-                    await sendPushNotification(barberToken, 'Appointment Cancelled', `An appointment assigned to you was cancelled.`);
-                }
+                const barberBody = `Your appointment with ${clientName} was cancelled.`;
+                await notifyUser(apptData.barberId, cancelTitle, barberBody, 'booking_cancelled', id);
             }
         } catch (pushErr) {
-            console.error('Push notification error:', pushErr);
+            console.error('Notification error during cancellation:', pushErr);
         }
         // --------------------------
 

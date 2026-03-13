@@ -207,6 +207,7 @@ export default function EditProfileScreen({ navigation }) {
                             <Camera color={COLORS.background} size={14} />
                         </View>
                     </TouchableOpacity>
+                    <Text style={styles.changePhotoText}>Change Profile Photo</Text>
                 </View>
 
                 <View style={styles.form}>
@@ -360,5 +361,6 @@ const styles = StyleSheet.create({
     btnWrapper: { marginTop: 12, marginBottom: 32 },
     sectionLabel: { color: COLORS.text, fontSize: 16, fontWeight: 'bold', marginBottom: 20 },
     deleteBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: '#F4433610', borderRadius: 16, borderWidth: 1, borderColor: '#F4433620' },
-    deleteBtnText: { color: '#F44336', fontSize: 16, fontWeight: 'bold', marginLeft: 10 }
+    deleteBtnText: { color: '#F44336', fontSize: 16, fontWeight: 'bold', marginLeft: 10 },
+    changePhotoText: { color: COLORS.primary, fontSize: 14, fontWeight: '600', marginTop: 12 }
 });

@@ -134,7 +134,12 @@ export default function SignupScreen({ navigation }) {
                                 {uploadingImage ? (
                                     <ActivityIndicator size="small" color={COLORS.primary} />
                                 ) : profileImageUrl ? (
-                                    <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
+                                    <>
+                                        <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
+                                        <View style={styles.editBadge}>
+                                            <Camera color={COLORS.background} size={14} />
+                                        </View>
+                                    </>
                                 ) : (
                                     <View style={styles.imagePlaceholder}>
                                         <Camera color={COLORS.primary} size={32} />
@@ -304,6 +309,19 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
         marginTop: 4,
+    },
+    editBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: COLORS.primary,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: COLORS.background,
     },
     form: {
         width: '100%',
