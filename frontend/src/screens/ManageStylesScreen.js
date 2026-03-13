@@ -98,7 +98,7 @@ export default function ManageStylesScreen({ navigation }) {
             const type = `image/${ext}`;
 
             formDataToUpload.append('image', {
-                uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+                uri: asset.uri,
                 type: type,
                 name: filename || 'upload.jpg',
             });
@@ -259,6 +259,7 @@ export default function ManageStylesScreen({ navigation }) {
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.modalOverlay}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
                 >
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
@@ -271,7 +272,7 @@ export default function ManageStylesScreen({ navigation }) {
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView showsVerticalScrollIndicator={false}>
+                        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                             <TouchableOpacity style={styles.imageUploadBox} onPress={pickImage} disabled={uploadingImage}>
                                 {uploadingImage ? (
                                     <ActivityIndicator size="small" color={COLORS.primary} />
