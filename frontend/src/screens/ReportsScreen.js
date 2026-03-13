@@ -92,50 +92,6 @@ export default function ReportsScreen({ navigation }) {
         });
     };
 
-    const exportToCSV = async () => {
-        try {
-            setExporting(true);
-            if (allAppointments.length === 0) {
-                Alert.alert('Info', 'No data to export');
-                return;
-            }
-
-            // CSV Header
-            let csvContent = 'ID,User,Email,BarberID,Date,Time,Price,Status,CreatedAt\n';
-
-            // CSV Body
-            allAppointments.forEach(a => {
-                const row = [
-                    a.id,
-                    `"${a.userName || 'N/A'}"`,
-                    `"${a.userEmail || 'N/A'}"`,
-                    a.barberId || 'None',
-                    a.date || 'N/A',
-                    a.time || 'N/A',
-                    a.price || 0,
-                    a.status || 'pending',
-                    a.createdAt || 'N/A'
-                ].join(',');
-                csvContent += row + '\n';
-            });
-
-            const fileName = `Yebichu_Bookings_Report_${new Date().toISOString().split('T')[0]}.csv`;
-            const fileUri = FileSystem.documentDirectory + fileName;
-
-            await FileSystem.writeAsStringAsync(fileUri, csvContent, { encoding: FileSystem.EncodingType.UTF8 });
-
-            if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(fileUri);
-            } else {
-                Alert.alert('Success', `CSV saved to: ${fileUri}`);
-            }
-        } catch (error) {
-            console.error('Export error:', error);
-            Alert.alert('Error', 'Failed to export CSV');
-        } finally {
-            setExporting(false);
-        }
-    };
 
     const exportToPDF = async () => {
         try {
@@ -299,27 +255,7 @@ export default function ReportsScreen({ navigation }) {
 
                     <View style={styles.actionSection}>
                         <Text style={styles.sectionTitle}>Data Portability</Text>
-                        <Text style={styles.sectionDesc}>Export all your business data to CSV for offline analysis and accounting.</Text>
-
-                        <TouchableOpacity
-                            style={styles.exportBtn}
-                            onPress={exportToCSV}
-                            disabled={exporting}
-                        >
-                            <LinearGradient
-                                colors={[COLORS.primary, '#8B0000']}
-                                style={styles.btnGradient}
-                            >
-                                {exporting ? (
-                                    <ActivityIndicator size="small" color="#FFF" />
-                                ) : (
-                                    <>
-                                        <FileDown color="#FFF" size={20} />
-                                        <Text style={styles.btnText}>Export All to CSV</Text>
-                                    </>
-                                )}
-                            </LinearGradient>
-                        </TouchableOpacity>
+                        <Text style={styles.sectionDesc}>Export your business performance report as a professional PDF document for accounting and records.</Text>
 
                         <TouchableOpacity
                             style={[styles.exportBtn, { marginTop: 15 }]}
