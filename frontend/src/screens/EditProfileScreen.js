@@ -6,7 +6,7 @@ import { COLORS } from '../theme/colors';
 import { ArrowLeft, User, Mail, Phone, FileText, Camera, Trash2, Lock } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
-import { updateUserProfile, updatePassword, uploadImage } from '../services/api';
+import { updateUserProfile, updatePassword, uploadProfileImage } from '../services/api';
 import CustomButton from '../components/Button';
 
 export default function EditProfileScreen({ navigation }) {
@@ -78,7 +78,7 @@ export default function EditProfileScreen({ navigation }) {
                 name: filename || 'upload.jpg',
             });
 
-            const { data } = await uploadImage(formDataToUpload);
+            const { data } = await uploadProfileImage(formDataToUpload);
             setProfileImage(data.url);
             setNewImageSelected(true);
         } catch (error) {
