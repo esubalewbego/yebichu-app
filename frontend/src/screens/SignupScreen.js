@@ -54,7 +54,7 @@ export default function SignupScreen({ navigation }) {
             const type = `image/${ext}`;
 
             formDataToUpload.append('image', {
-                uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+                uri: asset.uri,
                 type: type,
                 name: filename || 'upload.jpg',
             });

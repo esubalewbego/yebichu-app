@@ -50,26 +50,14 @@ export const updateCategory = (id, data) => api.put(`/packages/categories/${id}`
 export const deleteCategory = (id) => api.delete(`/packages/categories/${id}`);
 export const uploadImage = async (formData) => {
     try {
-        const token = await auth.currentUser?.getIdToken();
-        const response = await fetch(`${API_BASE_URL}/upload`, {
-            method: 'POST',
-            body: formData,
+        const response = await api.post('/upload', formData, {
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                // Important: Do NOT set Content-Type header on FormData fetch
+                'Content-Type': 'multipart/form-data',
             },
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || `Upload failed with status ${response.status}`);
-        }
-
-        const data = await response.json();
-        return { data };
+        return response;
     } catch (error) {
-        console.error('Fetch Upload Error:', error);
+        console.error('Axios Upload Error:', error);
         throw error;
     }
 };
@@ -77,24 +65,16 @@ export const uploadImage = async (formData) => {
 // Upload profile image without requiring auth (used during signup)
 export const uploadProfileImage = async (formData) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/upload/profile`, {
-            method: 'POST',
-            body: formData,
+        // Use a clean axios instance to avoid the auth interceptor if needed, 
+        // or just use the default instance since it handles null current user gracefully.
+        const response = await axios.post(`${API_BASE_URL}/upload/profile`, formData, {
             headers: {
-                'Accept': 'application/json',
-                // Important: Do NOT set Content-Type header on FormData fetch
+                'Content-Type': 'multipart/form-data',
             },
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || `Upload failed with status ${response.status}`);
-        }
-
-        const data = await response.json();
-        return { data };
+        return response;
     } catch (error) {
-        console.error('Fetch Profile Upload Error:', error);
+        console.error('Axios Profile Upload Error:', error);
         throw error;
     }
 };
