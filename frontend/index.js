@@ -35,6 +35,24 @@ import { NativeModules } from 'react-native';
 import { registerRootComponent } from 'expo';
 import { LogBox } from 'react-native';
 
+// Suppress unhandled promise rejections specifically targeting ExpoKeepAwake from dev-client
+if (__DEV__ && NativeModules.ExpoKeepAwake) {
+    const originalActivate = NativeModules.ExpoKeepAwake.activate;
+    if (originalActivate) {
+        NativeModules.ExpoKeepAwake.activate = async (tag) => {
+            try {
+                await originalActivate(tag);
+            } catch (err) {
+                // Silently swallow specific activity availability errors
+                const msg = err.message || '';
+                if (!msg.includes('The current activity is no longer available')) {
+                    console.warn('KeepAwake error:', err);
+                }
+            }
+        };
+    }
+}
+
 const originalWarn = console.warn;
 console.warn = (...args) => {
     if (args[0] && typeof args[0] === 'string' && args[0].includes('InteractionManager has been deprecated')) {

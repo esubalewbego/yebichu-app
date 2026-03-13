@@ -49,7 +49,7 @@ export default function EditProfileScreen({ navigation }) {
         try {
             let result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
-                allowsEditing: true,
+                allowsEditing: false,
                 aspect: [1, 1],
                 quality: 0.5,
             });
@@ -325,7 +325,7 @@ export default function EditProfileScreen({ navigation }) {
                     <CustomButton
                         title={passwordLoading ? "Updating..." : "Update Password"}
                         onPress={handlePasswordUpdate}
-                        variant="outline"
+                        variant="secondary"
                         disabled={passwordLoading}
                     />
                 </View>

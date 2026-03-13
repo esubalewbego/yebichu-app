@@ -110,6 +110,7 @@ export const verifyPayment = (txRef) => api.get(`/payments/verify/${txRef}`);
 export const sendMessage = (data) => api.post('/chat/send', data);
 export const getConversations = () => api.get('/chat/conversations');
 export const getMessages = (conversationId) => api.get(`/chat/messages/${conversationId}`);
+export const clearConversation = (id) => api.delete(`/chat/conversations/${id}`);
 
 // Ratings
 export const rateStyle = (id, data) => api.post(`/packages/styles/${id}/rate`, data);
@@ -117,6 +118,7 @@ export const rateStyle = (id, data) => api.post(`/packages/styles/${id}/rate`, d
 // Notifications
 export const getNotifications = () => api.get('/appointments/notifications');
 export const markNotificationRead = (id) => api.patch(`/appointments/notifications/${id}/read`);
+export const clearNotifications = () => api.delete('/appointments/notifications/clear');
 
 // Discounts
 export const getDiscounts = () => api.get('/discounts');

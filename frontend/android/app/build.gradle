@@ -157,8 +157,8 @@ dependencies {
     implementation("com.facebook.react:react-android")
     
     // Force stable activity to resolve BadParcelableException
-    implementation("androidx.activity:activity:1.9.3")
-    implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation("androidx.activity:activity:1.11.0")
+    implementation("androidx.activity:activity-ktx:1.11.0")
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";

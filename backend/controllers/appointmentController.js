@@ -290,9 +290,9 @@ const getNotifications = async (req, res) => {
     try {
         const uid = req.user.uid;
         const now = new Date();
-        const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        // 1. Cleanup: Delete notifications older than 2 hours
+        // 1. Cleanup: Delete notifications older than 30 days
         // We filter by userId only to avoid needing a Firestore composite index for 'createdAt' inequality
         const userDocs = await db.collection('notifications')
             .where('userId', '==', uid)
@@ -303,7 +303,7 @@ const getNotifications = async (req, res) => {
             let hasDeletions = false;
             userDocs.docs.forEach(doc => {
                 const data = doc.data();
-                if (data.createdAt < twoHoursAgo) {
+                if (data.createdAt < thirtyDaysAgo) {
                     batch.delete(doc.ref);
                     hasDeletions = true;
                 }
@@ -334,6 +334,26 @@ const markNotificationRead = async (req, res) => {
         const { id } = req.params;
         await db.collection('notifications').doc(id).update({ read: true });
         res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const clearAllNotifications = async (req, res) => {
+    try {
+        const uid = req.user.uid;
+        const snapshot = await db.collection('notifications')
+            .where('userId', '==', uid)
+            .get();
+
+        if (!snapshot.empty) {
+            const batch = db.batch();
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+        }
+        res.status(200).json({ message: 'Notifications cleared successfully.' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -400,5 +420,6 @@ module.exports = {
     deleteAppointment,
     cancelAppointmentByUser,
     getNotifications,
-    markNotificationRead
+    markNotificationRead,
+    clearAllNotifications
 };

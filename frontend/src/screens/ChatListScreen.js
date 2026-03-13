@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
-import { getConversations } from '../services/api';
-import { MessageSquare, ChevronRight, User } from 'lucide-react-native';
+import { getConversations, clearConversation } from '../services/api';
+import { MessageSquare, ChevronRight, User, Trash2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { auth, db } from '../config/firebase';
 import { collection, query, where, orderBy, onSnapshot, getDoc, doc as fsDoc } from 'firebase/firestore';
@@ -12,6 +12,7 @@ export default function ChatListScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         const uid = auth.currentUser?.uid;
@@ -25,6 +26,7 @@ export default function ChatListScreen({ navigation }) {
                 const userSnap = await getDoc(fsDoc(db, 'users', uid));
                 if (userSnap.exists() && userSnap.data().role?.toLowerCase() === 'admin') {
                     participantsToMatch.push('admin');
+                    setIsAdmin(true);
                 }
             } catch (err) {
                 console.error('Error fetching user role for chat query:', err);
@@ -98,6 +100,20 @@ export default function ChatListScreen({ navigation }) {
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         };
 
+        const handleDelete = () => {
+            Alert.alert("Delete Conversation", "Are you sure you want to delete this conversation? This will remove all messages.", [
+                { text: "Cancel", style: "cancel" },
+                { text: "Delete", style: "destructive", onPress: async () => {
+                    try {
+                        await clearConversation(item.id);
+                    } catch (e) {
+                        console.error('Failed to clear conversation:', e);
+                        Alert.alert("Error", "Failed to delete conversation.");
+                    }
+                }}
+            ]);
+        };
+
         return (
             <TouchableOpacity
                 style={styles.convoCard}
@@ -117,7 +133,13 @@ export default function ChatListScreen({ navigation }) {
                 </View>
                 <View style={styles.convoMeta}>
                     <Text style={styles.timeText}>{formatTime(item.lastUpdate)}</Text>
-                    <ChevronRight color={COLORS.textSecondary} size={20} />
+                    {isAdmin ? (
+                        <TouchableOpacity onPress={handleDelete} style={{ padding: 4 }}>
+                            <Trash2 color="#FF3B30" size={20} />
+                        </TouchableOpacity>
+                    ) : (
+                        <ChevronRight color={COLORS.textSecondary} size={20} />
+                    )}
                 </View>
             </TouchableOpacity>
         );
@@ -180,7 +202,7 @@ const styles = StyleSheet.create({
     convoTitle: { color: COLORS.text, fontSize: 16, fontWeight: 'bold' },
     convoEmail: { color: COLORS.primary, fontSize: 12, marginTop: 2 },
     lastMsg: { color: COLORS.textSecondary, fontSize: 13, marginTop: 4 },
-    convoMeta: { alignItems: 'flex-end', gap: 4 },
+    convoMeta: { alignItems: 'flex-end', justifyContent: 'space-between', paddingVertical: 4 },
     timeText: { color: COLORS.textSecondary, fontSize: 11 },
     empty: { alignItems: 'center', marginTop: 100, gap: 16 },
     emptyText: { color: COLORS.textSecondary, fontSize: 16 }

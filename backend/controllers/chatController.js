@@ -48,7 +48,7 @@ const sendMessage = async (req, res) => {
             const senderDoc = await db.collection('users').doc(senderId).get();
             const senderName = senderDoc.exists ? (senderDoc.data().fullName || senderDoc.data().displayName || 'someone') : 'someone';
 
-            notifyUser(
+            await notifyUser(
                 receiverId,
                 'New Message',
                 `${senderName} sent you a message: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
@@ -138,4 +138,32 @@ const getMessages = async (req, res) => {
     }
 };
 
-module.exports = { sendMessage, getConversations, getMessages };
+const clearConversation = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        // Delete all messages sub-collection documents
+        const messagesSnapshot = await db.collection('conversations')
+            .doc(conversationId)
+            .collection('messages')
+            .get();
+
+        if (!messagesSnapshot.empty) {
+            const batch = db.batch();
+            messagesSnapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+        }
+
+        // Delete the conversation document itself
+        await db.collection('conversations').doc(conversationId).delete();
+
+        res.status(200).json({ message: 'Conversation deleted.' });
+    } catch (error) {
+        console.error('clearConversation Error:', error);
+        res.status(500).json({ error: 'Failed to clear conversation', details: error.message });
+    }
+};
+
+module.exports = { sendMessage, getConversations, getMessages, clearConversation };

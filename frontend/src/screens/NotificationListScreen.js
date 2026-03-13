@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { Bell, ChevronLeft, CheckCircle2, Clock, Calendar, Scissors, Info, Trash2 } from 'lucide-react-native';
-import { getNotifications, markNotificationRead } from '../services/api';
+import { getNotifications, markNotificationRead, clearNotifications } from '../services/api';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 
@@ -30,6 +30,30 @@ export default function NotificationListScreen({ navigation }) {
     useEffect(() => {
         fetchNotifications();
     }, [fetchNotifications]);
+
+    const handleClearAll = () => {
+        if (notifications.length === 0) return;
+        Alert.alert(
+            "Clear Notifications",
+            "Are you sure you want to clear all your notifications?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Clear All",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await clearNotifications();
+                            setNotifications([]);
+                        } catch (error) {
+                            console.error('Failed to clear notifications:', error);
+                            Alert.alert('Error', 'Failed to clear notifications.');
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const handleNotificationPress = async (item) => {
         if (!item.read) {
@@ -101,14 +125,21 @@ export default function NotificationListScreen({ navigation }) {
                 colors={[COLORS.primary + '20', COLORS.background]}
                 style={styles.header}
             >
-                <View style={styles.headerRowMain}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                        <ChevronLeft color={COLORS.text} size={28} />
-                    </TouchableOpacity>
-                    <View>
-                        <Text style={styles.headerTitle}>Notifications</Text>
-                        <Text style={styles.headerSub}>Stay updated with your activities</Text>
+                <View style={[styles.headerRowMain, { justifyContent: 'space-between' }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                            <ChevronLeft color={COLORS.text} size={28} />
+                        </TouchableOpacity>
+                        <View>
+                            <Text style={styles.headerTitle}>Notifications</Text>
+                            <Text style={styles.headerSub}>Stay updated with your activities</Text>
+                        </View>
                     </View>
+                    {notifications.length > 0 && (
+                        <TouchableOpacity onPress={handleClearAll} style={styles.clearBtn}>
+                            <Trash2 color={COLORS.primary} size={22} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </LinearGradient>
 
@@ -140,8 +171,9 @@ export default function NotificationListScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     header: { padding: 24, paddingBottom: 20 },
-    headerRowMain: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    headerRowMain: { flexDirection: 'row', alignItems: 'center' },
     backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#333' },
+    clearBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center' },
     headerTitle: { fontSize: 24, fontWeight: 'bold', color: COLORS.text },
     headerSub: { fontSize: 13, color: COLORS.textSecondary },
     list: { padding: 24, paddingTop: 0 },
