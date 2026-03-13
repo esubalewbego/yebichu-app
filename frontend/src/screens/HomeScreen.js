@@ -115,7 +115,7 @@ export default function HomeScreen({ navigation }) {
     const flatListRef = React.useRef(null);
 
     const handleNextStyle = (index) => {
-        const filtered = stylesData.filter(s => !selectedCategory || s.categoryId === selectedCategory);
+        const filtered = stylesData.filter(s => !selectedCategory || s.category === selectedCategory);
         if (flatListRef.current && index < filtered.length - 1) {
             flatListRef.current.scrollToIndex({ index: index + 1, animated: true });
         } else if (flatListRef.current) {
@@ -209,10 +209,10 @@ export default function HomeScreen({ navigation }) {
                                 {categories.map(cat => (
                                     <TouchableOpacity
                                         key={cat.id || 'all'}
-                                        style={[styles.catPill, selectedCategory === cat.id && styles.activePill]}
-                                        onPress={() => setSelectedCategory(cat.id)}
+                                        style={[styles.catPill, selectedCategory === (cat.id ? cat.name : null) && styles.activePill]}
+                                        onPress={() => setSelectedCategory(cat.id ? cat.name : null)}
                                     >
-                                        <Text style={[styles.catLabel, selectedCategory === cat.id && styles.activeLabel]}>{cat.name}</Text>
+                                        <Text style={[styles.catLabel, selectedCategory === (cat.id ? cat.name : null) && styles.activeLabel]}>{cat.name}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
@@ -231,7 +231,7 @@ export default function HomeScreen({ navigation }) {
 
                             <FlatList
                                 ref={flatListRef}
-                                data={stylesData.filter(s => !selectedCategory || s.categoryId === selectedCategory)}
+                                data={stylesData.filter(s => !selectedCategory || s.category === selectedCategory)}
                                 renderItem={({ item, index }) => (
                                     <View style={styles.premiumSlide}>
                                         <TouchableOpacity
