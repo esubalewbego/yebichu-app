@@ -74,6 +74,31 @@ export const uploadImage = async (formData) => {
     }
 };
 
+// Upload profile image without requiring auth (used during signup)
+export const uploadProfileImage = async (formData) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/upload/profile`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+                // Important: Do NOT set Content-Type header on FormData fetch
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `Upload failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        return { data };
+    } catch (error) {
+        console.error('Fetch Profile Upload Error:', error);
+        throw error;
+    }
+};
+
 // Appointments
 export const createAppointment = (data) => api.post('/appointments', data);
 export const getUserAppointments = (userId) => api.get(`/appointments/user/${userId}`);

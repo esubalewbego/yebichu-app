@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/colors';
 import CustomButton from '../components/Button';
-import { uploadImage } from '../services/api';
+import { uploadProfileImage } from '../services/api';
 import { Mail, Lock, User, ChevronLeft, ArrowLeft, ShieldCheck, Smartphone, Scissors, Camera } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
@@ -59,7 +59,7 @@ export default function SignupScreen({ navigation }) {
                 name: filename || 'upload.jpg',
             });
 
-            const { data } = await uploadImage(formDataToUpload);
+            const { data } = await uploadProfileImage(formDataToUpload);
             setProfileImageUrl(data.url);
         } catch (error) {
             console.error('Image upload failed:', error);

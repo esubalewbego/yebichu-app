@@ -8,7 +8,10 @@ const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware')
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Only admins can upload images for packages
+// Only admins can upload images for packages/styles
 router.post('/', authenticate, authorizeAdmin, upload.single('image'), uploadImage);
+
+// Anyone (including new users during signup) can upload a profile photo
+router.post('/profile', upload.single('image'), uploadImage);
 
 module.exports = router;
